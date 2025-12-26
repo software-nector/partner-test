@@ -16,6 +16,7 @@ class Product(Base):
     # Pricing
     mrp = Column(Float, nullable=False)
     selling_price = Column(Float, nullable=False)
+    cashback_amount = Column(Float, default=100.0)
     
     # Marketplace Links
     amazon_url = Column(String(500), nullable=True)

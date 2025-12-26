@@ -9,6 +9,7 @@ load_dotenv()
 class Settings(BaseModel):
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./purna_gummies.db")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development") # development or production
     
     # JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")

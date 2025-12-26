@@ -20,6 +20,7 @@ class Reward(Base):
     purchase_date = Column(DateTime, nullable=False)
     review_screenshot = Column(String(500), nullable=False)  # File path
     platform_name = Column(String(50), nullable=True)  # Amazon, Flipkart, Meesho, etc.
+    coupon_code = Column(String(50), nullable=True, index=True) # Linked QR code
     screenshot_quality = Column(String(20), nullable=True)  # AI analysis: excellent, good, fair, poor
     
     # Status

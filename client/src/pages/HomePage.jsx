@@ -10,6 +10,7 @@ import {
     Star, Wallet, Activity, Camera, Instagram,
     Gift, Zap, Mail, Lock, User as UserIcon
 } from 'lucide-react'
+import api from '../services/api'
 
 export default function HomePage() {
     const navigate = useNavigate()
@@ -68,13 +69,8 @@ export default function HomePage() {
 
     const fetchDashboard = async () => {
         try {
-            const response = await fetch('http://194.238.18.10:8001/api/user/dashboard', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            })
-            if (response.ok) {
-                const data = await response.json()
-                setDashboardData(data)
-            }
+            const response = await api.get('/user/dashboard')
+            setDashboardData(response.data)
         } catch (error) {
             console.error('Dashboard fetch failed:', error)
         }
@@ -84,20 +80,14 @@ export default function HomePage() {
         if (e) e.preventDefault()
         setFormLoading(true)
         try {
-            const response = await fetch('http://194.238.18.10:8001/api/auth/whatsapp/send-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: loginForm.phone, coupon: loginForm.coupon })
+            await api.post('/auth/whatsapp/send-otp', {
+                phone: loginForm.phone,
+                coupon: loginForm.coupon
             })
-            if (response.ok) {
-                setLoginForm(prev => ({ ...prev, step: 2 }))
-                toast.success('OTP sent on WhatsApp!')
-            } else {
-                const data = await response.json()
-                toast.error(data.detail || 'Failed to send OTP')
-            }
+            setLoginForm(prev => ({ ...prev, step: 2 }))
+            toast.success('OTP sent on WhatsApp!')
         } catch (error) {
-            toast.error('Connection error')
+            toast.error(error.response?.data?.detail || 'Failed to send OTP')
         } finally {
             setFormLoading(false)
         }
@@ -107,28 +97,20 @@ export default function HomePage() {
         e.preventDefault()
         setFormLoading(true)
         try {
-            const response = await fetch('http://194.238.18.10:8001/api/auth/whatsapp/verify-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    phone: loginForm.phone,
-                    otp: loginForm.otp,
-                    coupon: loginForm.coupon
-                })
+            const response = await api.post('/auth/whatsapp/verify-otp', {
+                phone: loginForm.phone,
+                otp: loginForm.otp,
+                coupon: loginForm.coupon
             })
 
-            const data = await response.json()
-            if (response.ok) {
-                localStorage.setItem('token', data.token)
-                localStorage.setItem('user', JSON.stringify(data.user))
-                toast.success('Login successful!')
-                setShowLoginModal(false)
-                window.location.reload()
-            } else {
-                toast.error(data.detail || 'Invalid OTP')
-            }
+            const data = response.data
+            localStorage.setItem('token', data.token)
+            localStorage.setItem('user', JSON.stringify(data.user))
+            toast.success('Login successful!')
+            setShowLoginModal(false)
+            window.location.reload()
         } catch (error) {
-            toast.error('Connection error')
+            toast.error(error.response?.data?.detail || 'Invalid OTP')
         } finally {
             setFormLoading(false)
         }
@@ -138,31 +120,21 @@ export default function HomePage() {
         e.preventDefault()
         setFormLoading(true)
         try {
-            const endpoint = isSignup ? '/api/auth/email/register' : '/api/auth/email/login'
+            const endpoint = isSignup ? '/auth/email/register' : '/auth/email/login'
             const payload = isSignup
                 ? { email: emailForm.email, password: emailForm.password, name: emailForm.name }
                 : { email: emailForm.email, password: emailForm.password }
 
-            const response = await fetch(`http://194.238.18.10:8001${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
+            const response = await api.post(endpoint, payload)
+            const data = response.data
 
-            const data = await response.json()
-
-            if (response.ok) {
-                localStorage.setItem('token', data.token)
-                localStorage.setItem('user', JSON.stringify(data.user))
-                toast.success(isSignup ? 'Account created successfully!' : 'Login successful!')
-                setShowLoginModal(false)
-                window.location.reload() // Reload to update auth state
-            } else {
-                toast.error(data.detail || 'Authentication failed')
-            }
+            localStorage.setItem('token', data.token)
+            localStorage.setItem('user', JSON.stringify(data.user))
+            toast.success(isSignup ? 'Account created successfully!' : 'Login successful!')
+            setShowLoginModal(false)
+            window.location.reload()
         } catch (error) {
-            console.error('Email auth error:', error)
-            toast.error('Connection error. Please try again.')
+            toast.error(error.response?.data?.detail || 'Authentication failed')
         } finally {
             setFormLoading(false)
         }
@@ -177,23 +149,14 @@ export default function HomePage() {
                         client_id: '1002481870605-ik6ef0o6flqocv3g0ksu1v8dmh70eme8.apps.googleusercontent.com',
                         callback: async (response) => {
                             try {
-                                const res = await fetch('http://194.238.18.10:8001/api/auth/google/login', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ token: response.credential })
-                                })
+                                const res = await api.post('/auth/google/login', { token: response.credential })
+                                const data = res.data
 
-                                const data = await res.json()
-
-                                if (res.ok) {
-                                    localStorage.setItem('token', data.token)
-                                    localStorage.setItem('user', JSON.stringify(data.user))
-                                    toast.success('Google login successful!')
-                                    setShowLoginModal(false)
-                                    window.location.reload()
-                                } else {
-                                    toast.error(data.detail || 'Google login failed')
-                                }
+                                localStorage.setItem('token', data.token)
+                                localStorage.setItem('user', JSON.stringify(data.user))
+                                toast.success('Google login successful!')
+                                setShowLoginModal(false)
+                                window.location.reload()
                             } catch (error) {
                                 console.error('Google login error:', error)
                                 toast.error('Google login failed')
@@ -228,27 +191,23 @@ export default function HomePage() {
         e.preventDefault()
         setFormLoading(true)
         try {
-            const data = new FormData()
-            data.append('platform', cashbackForm.platform)
-            data.append('upi_id', cashbackForm.upiId)
-            data.append('coupon_code', cashbackForm.couponCode)
-            if (cashbackForm.screenshot) data.append('screenshot', cashbackForm.screenshot)
+            const formData = new FormData()
+            formData.append('platform', cashbackForm.platform)
+            formData.append('upi_id', cashbackForm.upiId)
+            formData.append('coupon_code', cashbackForm.couponCode)
+            formData.append('name', user?.name || 'User')
+            formData.append('phone', user?.phone || 'N/A')
+            if (cashbackForm.screenshot) formData.append('screenshot', cashbackForm.screenshot)
 
-            const response = await fetch('http://194.238.18.10:8001/api/rewards/submit', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                body: data
+            await api.post('/rewards/submit', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             })
 
-            if (response.ok) {
-                toast.success('Cashback claim submitted successfully!')
-                setCashbackForm({ platform: '', upiId: '', couponCode: '', screenshot: null })
-                await fetchDashboard()
-            } else {
-                toast.error('Submission failed')
-            }
+            toast.success('Cashback claim submitted successfully!')
+            setCashbackForm({ platform: '', upiId: '', couponCode: '', screenshot: null })
+            await fetchDashboard()
         } catch (error) {
-            toast.error('Network error')
+            toast.error(error.response?.data?.detail || 'Submission failed')
         } finally {
             setFormLoading(false)
         }
@@ -258,28 +217,22 @@ export default function HomePage() {
         e.preventDefault()
         setFormLoading(true)
         try {
-            const data = new FormData()
-            data.append('reel_url', videoForm.reelUrl)
-            data.append('instagram_handle', videoForm.instagramUsername)
-            data.append('address', videoForm.address)
-            data.append('product_name', 'Purna Gummies')
-            if (videoForm.screenshot) data.append('screenshot', videoForm.screenshot)
+            const formData = new FormData()
+            formData.append('reel_url', videoForm.reelUrl)
+            formData.append('instagram_handle', videoForm.instagramUsername)
+            formData.append('address', videoForm.address)
+            formData.append('product_name', 'Purna Gummies')
+            if (videoForm.screenshot) formData.append('screenshot', videoForm.screenshot)
 
-            const response = await fetch('http://194.238.18.10:8001/api/reels/submit', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                body: data
+            await api.post('/reels/submit', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             })
 
-            if (response.ok) {
-                toast.success('Reel submitted successfully!')
-                setVideoForm({ reelUrl: '', instagramUsername: '', address: '', screenshot: null })
-                await fetchDashboard()
-            } else {
-                toast.error('Submission failed')
-            }
+            toast.success('Reel submitted successfully!')
+            setVideoForm({ reelUrl: '', instagramUsername: '', address: '', screenshot: null })
+            await fetchDashboard()
         } catch (error) {
-            toast.error('Network error')
+            toast.error(error.response?.data?.detail || 'Submission failed')
         } finally {
             setFormLoading(false)
         }
@@ -358,7 +311,7 @@ export default function HomePage() {
                                             </div>
                                             <div>
                                                 <p className="text-gray-400 text-sm">Total Rewards</p>
-                                                <p className="text-2xl font-bold">₹{(dashboardData?.stats?.rewards?.total || 0) * 100}</p>
+                                                <p className="text-2xl font-bold">₹{dashboardData?.stats?.rewards?.total_cashback || 0}</p>
                                             </div>
                                         </div>
                                     </div>

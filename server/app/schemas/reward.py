@@ -25,6 +25,7 @@ class RewardResponse(BaseModel):
     purchase_date: datetime
     review_screenshot: str
     platform_name: Optional[str] = None
+    coupon_code: Optional[str] = None
     screenshot_quality: Optional[str] = None
     status: str = "pending"
     admin_notes: Optional[str] = None

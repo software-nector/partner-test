@@ -9,7 +9,7 @@ node_modules/
 *.db
 
 # Build files
-dist/
+# dist/
 build/
 
 # Logs

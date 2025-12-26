@@ -13,7 +13,7 @@ export default function ProductManager() {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [showCompanyModal, setShowCompanyModal] = useState(false)
-    const [newCompany, setNewCompany] = useState({ name: '', website: '', description: '', products: [{ name: '' }] })
+    const [newCompany, setNewCompany] = useState({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, selling_price: 0, cashback_amount: 100 }] })
 
     useEffect(() => {
         fetchData()
@@ -40,7 +40,7 @@ export default function ProductManager() {
             await productService.admin.createCompany(newCompany)
             toast.success('System: Brand Profile & Products Registered')
             setShowCompanyModal(false)
-            setNewCompany({ name: '', website: '', description: '', products: [{ name: '' }] })
+            setNewCompany({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, selling_price: 0, cashback_amount: 100 }] })
             fetchData()
         } catch (error) {
             toast.error('Failed to add company')
@@ -50,7 +50,7 @@ export default function ProductManager() {
     const addProductField = () => {
         setNewCompany({
             ...newCompany,
-            products: [...newCompany.products, { name: '' }]
+            products: [...newCompany.products, { name: '', mrp: 0, selling_price: 0, cashback_amount: 100 }]
         })
     }
 
@@ -136,6 +136,7 @@ export default function ProductManager() {
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Inventory Identity</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Brand Source</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Market Value</th>
+                                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Cashback</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 text-right">Operations</th>
                             </tr>
                         </thead>
@@ -161,6 +162,10 @@ export default function ProductManager() {
                                     <td className="px-10 py-8">
                                         <div className="font-black text-xl text-white tracking-tighter italic">₹{product.selling_price}</div>
                                         <div className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">MSRP: ₹{product.mrp}</div>
+                                    </td>
+                                    <td className="px-10 py-8">
+                                        <div className="font-black text-xl text-emerald-500 tracking-tighter italic">₹{product.cashback_amount}</div>
+                                        <div className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">PER UNIT</div>
                                     </td>
                                     <td className="px-10 py-8 text-right">
                                         <div className="flex justify-end gap-2 opacity-20 group-hover:opacity-100 transition-all">
@@ -270,15 +275,37 @@ export default function ProductManager() {
                                                     <Trash2 size={12} />
                                                 </button>
 
-                                                <FormGroup label="Name">
-                                                    <input
-                                                        required
-                                                        value={product.name}
-                                                        onChange={e => updateProductField(index, 'name', e.target.value)}
-                                                        className="premium-input h-10 py-0"
-                                                        placeholder="Product name"
-                                                    />
-                                                </FormGroup>
+                                                <div className="grid grid-cols-3 gap-4">
+                                                    <FormGroup label="Name">
+                                                        <input
+                                                            required
+                                                            value={product.name}
+                                                            onChange={e => updateProductField(index, 'name', e.target.value)}
+                                                            className="premium-input h-10 py-0"
+                                                            placeholder="Product name"
+                                                        />
+                                                    </FormGroup>
+                                                    <FormGroup label="Selling Price">
+                                                        <input
+                                                            required
+                                                            type="number"
+                                                            value={product.selling_price}
+                                                            onChange={e => updateProductField(index, 'selling_price', e.target.value)}
+                                                            className="premium-input h-10 py-0"
+                                                            placeholder="₹"
+                                                        />
+                                                    </FormGroup>
+                                                    <FormGroup label="Cashback">
+                                                        <input
+                                                            required
+                                                            type="number"
+                                                            value={product.cashback_amount}
+                                                            onChange={e => updateProductField(index, 'cashback_amount', e.target.value)}
+                                                            className="premium-input h-10 py-0 border-emerald-500/20 text-emerald-500"
+                                                            placeholder="₹"
+                                                        />
+                                                    </FormGroup>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

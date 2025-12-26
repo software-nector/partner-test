@@ -10,17 +10,11 @@ from app.models.user import User
 from app.models.qr_code import QRCode
 from app.schemas.reward import RewardResponse
 from app.config import settings
+from app.api.auth import get_current_user
 
 router = APIRouter()
 
-# Simple auth dependency (in production, use JWT)
-async def get_current_user(db: Session = Depends(get_db)):
-    # TODO: Implement proper JWT authentication logic here
-    # For now, we use a simple header-based approach or fallback to first user
-    user = db.query(User).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return user
+# Using real auth from auth.py
 from app.models.product import Product
 
 @router.post("/submit", response_model=RewardResponse)
@@ -104,6 +98,9 @@ async def submit_reward(
     if not qr:
         raise HTTPException(status_code=404, detail="Invalid coupon code")
     
+    if qr.is_used:
+        raise HTTPException(status_code=400, detail="This coupon code has already been claimed")
+    
     # Get product name from QR code context
     product = db.query(Product).filter(Product.id == qr.product_id).first()
     final_product_name = product.name if product else "Unknown Product"
@@ -124,7 +121,9 @@ async def submit_reward(
         purchase_date=datetime.now(),
         review_screenshot=f"/{file_path}",
         platform_name=platform,
+        coupon_code=coupon_code.upper(), # Store the code used
         upi_id=upi_id,
+        payment_amount=product.cashback_amount if product else 100.0,
         status=reward_status,
         # AI Analysis fields
         ai_verified=ai_verified,
@@ -133,6 +132,11 @@ async def submit_reward(
         ai_confidence=ai_confidence,
         ai_analysis_status=ai_analysis_status
     )
+    
+    # Mark QR code as used
+    qr.is_used = True
+    qr.last_scanned_at = datetime.now()
+    qr.scan_count += 1
     
     db.add(reward)
     db.commit()

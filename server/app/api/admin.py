@@ -10,12 +10,17 @@ from app.models.reel import Reel
 from app.models.user import User
 from app.schemas.reward import RewardResponse, RewardUpdateRequest
 from app.schemas.reel import ReelResponse, ReelUpdateRequest
+from app.api.auth import get_current_user
 
 router = APIRouter()
 
 # Admin authentication (simplified - in production use proper auth)
-async def verify_admin(db: Session = Depends(get_db)):
-    # TODO: Implement proper admin authentication
+async def verify_admin(current_user: User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403, 
+            detail="Forbidden: Admin access required"
+        )
     return True
 
 @router.get("/rewards", response_model=List[RewardResponse])

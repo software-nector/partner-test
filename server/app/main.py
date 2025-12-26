@@ -23,19 +23,24 @@ app = FastAPI(
     title="Purna Gummies API",
     description="Reward & Review System - Backend API",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
+    redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None
 )
 
 # CORS Middleware
+# In production, ONLY the official frontend URL should be allowed
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    settings.FRONTEND_URL
+]
+
+# Filtering out None or empty strings from origins
+allowed_origins = [origin for origin in allowed_origins if origin]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://purna-cashback.vercel.app",
-        "http://194.238.18.10"
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

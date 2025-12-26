@@ -16,7 +16,7 @@ router = APIRouter()
 # --- Company Management ---
 
 @router.post("/companies", response_model=CompanyResponse, status_code=status.HTTP_201_CREATED)
-async def create_company(company: CompanyCreate, db: Session = Depends(get_db)):
+async def create_company(company: CompanyCreate, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     # Check if company with same name already exists
     existing = db.query(Company).filter(Company.name == company.name).first()
     if existing:
@@ -41,7 +41,8 @@ async def create_company(company: CompanyCreate, db: Session = Depends(get_db)):
                 company_id=db_company.id,
                 name=p_data.name,
                 mrp=p_data.mrp,
-                selling_price=p_data.selling_price
+                selling_price=p_data.selling_price,
+                cashback_amount=getattr(p_data, 'cashback_amount', 100.0)
             )
             db.add(product)
     
@@ -50,13 +51,13 @@ async def create_company(company: CompanyCreate, db: Session = Depends(get_db)):
     return db_company
 
 @router.get("/companies", response_model=List[CompanyResponse])
-async def list_companies(db: Session = Depends(get_db)):
+async def list_companies(db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     return db.query(Company).all()
 
 # --- Product Management ---
 
 @router.post("/products", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
-async def create_product(product: ProductCreate, db: Session = Depends(get_db)):
+async def create_product(product: ProductCreate, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     # Verify company exists
     company = db.query(Company).filter(Company.id == product.company_id).first()
     if not company:
@@ -69,11 +70,11 @@ async def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     return db_product
 
 @router.get("/products", response_model=List[ProductResponse])
-async def list_all_products(db: Session = Depends(get_db)):
+async def list_all_products(db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     return db.query(Product).all()
 
 @router.put("/products/{product_id}", response_model=ProductResponse)
-async def update_product(product_id: int, product_update: ProductUpdate, db: Session = Depends(get_db)):
+async def update_product(product_id: int, product_update: ProductUpdate, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     db_product = db.query(Product).filter(Product.id == product_id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -89,7 +90,7 @@ async def update_product(product_id: int, product_update: ProductUpdate, db: Ses
 # --- QR Code Generation ---
 
 @router.post("/products/{product_id}/generate-qr", response_model=QRCodeResponse)
-async def generate_qr_for_product(product_id: int, db: Session = Depends(get_db)):
+async def generate_qr_for_product(product_id: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     # Verify product exists
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
@@ -107,7 +108,7 @@ async def generate_qr_for_product(product_id: int, db: Session = Depends(get_db)
     return db_qr
 
 @router.post("/products/{product_id}/generate-bulk")
-async def generate_bulk_qr(product_id: int, quantity: int, db: Session = Depends(get_db)):
+async def generate_bulk_qr(product_id: int, quantity: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     """Generate multiple QR codes at once"""
     # Verify product exists
     product = db.query(Product).filter(Product.id == product_id).first()
@@ -137,7 +138,7 @@ async def generate_bulk_qr(product_id: int, quantity: int, db: Session = Depends
     }
 
 @router.get("/products/{product_id}/qr-codes", response_model=List[QRCodeResponse])
-async def get_product_qr_codes(product_id: int, db: Session = Depends(get_db)):
+async def get_product_qr_codes(product_id: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     return db.query(QRCode).filter(QRCode.product_id == product_id).all()
 
 @router.get("/products/{product_id}/qr-image/{code}")

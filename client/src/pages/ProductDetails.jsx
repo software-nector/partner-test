@@ -82,7 +82,7 @@ export default function ProductDetails() {
                     <div className="grid grid-cols-2 gap-6">
                         {[
                             { icon: <ShieldCheck size={18} />, label: 'CLINICALLY TESTED', val: 'PRO GRADE' },
-                            { icon: <Zap size={18} />, label: 'CASHBACK ELIGIBLE', val: 'UP TO ₹100' }
+                            { icon: <Zap size={18} />, label: 'CASHBACK ELIGIBLE', val: `UP TO ₹${product.cashback_amount}` }
                         ].map((s, i) => (
                             <div key={i} className="bg-white/5 border border-white/5 p-8 rounded-[2rem] space-y-2">
                                 <div className="text-blue-500 bg-blue-500/10 w-10 h-10 rounded-xl flex items-center justify-center mb-4">{s.icon}</div>
@@ -155,7 +155,7 @@ export default function ProductDetails() {
                             onClick={() => navigate('/', { state: { productName: product.name, qrCode: qrCode, autoOpenReward: true } })}
                             className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-2xl shadow-2xl shadow-blue-500/30 transition-all flex items-center justify-center gap-4 group"
                         >
-                            Claim ₹100 Cashback
+                            Claim ₹{product.cashback_amount} Cashback
                             <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
                         </motion.button>
 

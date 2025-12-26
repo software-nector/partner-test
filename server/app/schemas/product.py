@@ -8,6 +8,7 @@ class ProductBase(BaseModel):
     image_url: Optional[str] = None
     mrp: float
     selling_price: float
+    cashback_amount: float = 100.0
     amazon_url: Optional[str] = None
     flipkart_url: Optional[str] = None
     website_url: Optional[str] = None
@@ -21,6 +22,7 @@ class ProductUpdate(ProductBase):
     name: Optional[str] = None
     mrp: Optional[float] = None
     selling_price: Optional[float] = None
+    cashback_amount: Optional[float] = None
     company_id: Optional[int] = None
 
 class ProductResponse(ProductBase):
