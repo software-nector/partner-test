@@ -3,18 +3,19 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from app.database import get_db
 from app.models.user import User
 from app.models.coupon import Coupon
 from app.schemas.auth import LoginRequest, LoginResponse, UserResponse
 from app.config import settings
 from app.services.google_oauth import google_oauth
+from app.services.email_service import email_service  # Reuse OTP generation logic
 
 router = APIRouter()
 
 # Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
 def create_access_token(data: dict):
     """Create JWT access token"""
@@ -76,6 +77,90 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         data={"user_id": user.id, "phone": user.phone}
     )
     
+    return LoginResponse(
+        token=access_token,
+        user=UserResponse.model_validate(user)
+    )
+
+class WhatsAppOTPRequest(BaseModel):
+    phone: str
+    coupon: str = None  # Optional during OTP send, captured in frontend
+
+class WhatsAppVerifyRequest(BaseModel):
+    phone: str
+    otp: str
+    coupon: str = None
+
+@router.post("/whatsapp/send-otp")
+async def send_whatsapp_otp(request: WhatsAppOTPRequest, db: Session = Depends(get_db)):
+    """
+    Step 1: Generate and 'send' OTP via WhatsApp (Mocked)
+    """
+    # Clean phone number
+    phone = request.phone.strip()
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+
+    # Generate OTP
+    otp = email_service.generate_otp()
+    expiry = email_service.calculate_otp_expiry()
+
+    # Find or create user
+    user = db.query(User).filter(User.phone == phone).first()
+    if not user:
+        user = User(phone=phone)
+        db.add(user)
+    
+    # Update user with OTP
+    user.otp_code = otp
+    user.otp_expires_at = expiry
+    user.otp_attempts = 0
+    db.commit()
+
+    # MOCK: In production, integrate with WhatsApp API (e.g., Twilio, Meta)
+    print(f"\n[WHATSAPP MOCK] Sending OTP {otp} to {phone}\n")
+    
+    return {"message": "OTP sent successfully", "phone": phone}
+
+@router.post("/whatsapp/verify-otp", response_model=LoginResponse)
+async def verify_whatsapp_otp(request: WhatsAppVerifyRequest, db: Session = Depends(get_db)):
+    """
+    Step 2: Verify OTP and link coupon if provided
+    """
+    user = db.query(User).filter(User.phone == request.phone).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check OTP
+    if not user.otp_code or user.otp_expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="OTP expired or not found")
+
+    if user.otp_attempts >= settings.MAX_OTP_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="Too many attempts")
+
+    if user.otp_code != request.otp:
+        user.otp_attempts += 1
+        db.commit()
+        raise HTTPException(status_code=401, detail="Invalid OTP")
+
+    # Clear OTP
+    user.otp_code = None
+    user.otp_expires_at = None
+    user.otp_attempts = 0
+    
+    # Handle Coupon if provided (legacy support for the initial requirement)
+    if request.coupon:
+        coupon = db.query(Coupon).filter(Coupon.code == request.coupon.upper()).first()
+        if coupon and not coupon.is_used:
+            coupon.is_used = True
+            coupon.user_id = user.id
+            coupon.used_at = datetime.utcnow()
+    
+    db.commit()
+
+    # Create token
+    access_token = create_access_token(data={"user_id": user.id, "phone": user.phone})
+
     return LoginResponse(
         token=access_token,
         user=UserResponse.model_validate(user)

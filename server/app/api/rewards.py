@@ -7,6 +7,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models.reward import Reward
 from app.models.user import User
+from app.models.qr_code import QRCode
 from app.schemas.reward import RewardResponse
 from app.config import settings
 
@@ -14,11 +15,13 @@ router = APIRouter()
 
 # Simple auth dependency (in production, use JWT)
 async def get_current_user(db: Session = Depends(get_db)):
-    # TODO: Implement proper JWT authentication
+    # TODO: Implement proper JWT authentication logic here
+    # For now, we use a simple header-based approach or fallback to first user
     user = db.query(User).first()
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user
+from app.models.product import Product
 
 @router.post("/submit", response_model=RewardResponse)
 async def submit_reward(
@@ -96,19 +99,33 @@ async def submit_reward(
         ai_verified = False
         ai_analysis_status = "failed"
     
-    # Create reward record with AI analysis (if available)
+    # Verify Coupon and Fetch Product Name (Locked logic)
+    qr = db.query(QRCode).filter(QRCode.code == coupon_code.upper()).first()
+    if not qr:
+        raise HTTPException(status_code=404, detail="Invalid coupon code")
+    
+    # Get product name from QR code context
+    product = db.query(Product).filter(Product.id == qr.product_id).first()
+    final_product_name = product.name if product else "Unknown Product"
+
+    # Create reward record with AI analysis
+    # Auto-approve if AI confirms 5-star rating
+    reward_status = "pending"
+    if ai_analysis_status == "success" and is_five_star:
+        reward_status = "approved"
+
     reward = Reward(
         user_id=current_user.id,
         name=name,
         phone=phone,
         email=current_user.email,
         address="N/A",
-        product_name=coupon_code,
+        product_name=final_product_name,  # Derived from DB, not user input
         purchase_date=datetime.now(),
-        review_screenshot=f"/{file_path}",  # Add leading slash for URL
+        review_screenshot=f"/{file_path}",
         platform_name=platform,
         upi_id=upi_id,
-        status="pending",
+        status=reward_status,
         # AI Analysis fields
         ai_verified=ai_verified,
         detected_rating=detected_rating,

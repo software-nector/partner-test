@@ -61,23 +61,20 @@ async def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db))
         db.commit()
         db.refresh(admin)
     else:
-        # Verify password with bcrypt directly
-        import bcrypt
-        
+        # Verify password with Argon2
         print(f"[DEBUG] Admin found: {admin.email}")
-        print(f"[DEBUG] Password from request: {request.password}")
-        print(f"[DEBUG] Hash from DB: {admin.password_hash[:50]}...")
-        print(f"[DEBUG] Hash length: {len(admin.password_hash)}")
         
         try:
-            result = bcrypt.checkpw(request.password.encode('utf-8'), admin.password_hash.encode('utf-8'))
-            print(f"[DEBUG] Password verification result: {result}")
+            # result = ph.verify(admin.password_hash, request.password)
+            ph.verify(admin.password_hash, request.password)
+            print(f"[DEBUG] Password verification successful")
             
-            if not result:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid email or password"
-                )
+        except VerifyMismatchError:
+            print(f"[DEBUG] Password verification failed: Mismatch")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
         except Exception as e:
             print(f"[ERROR] Password verification exception: {e}")
             raise HTTPException(

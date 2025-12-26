@@ -13,24 +13,7 @@ class Settings(BaseModel):
     # JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
-from pydantic import BaseModel
-from typing import Optional
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-class Settings(BaseModel):
-    # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./purna_gummies.db")
-    
-    # JWT
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200  # 30 days for admin/dev convenience
     
     # Twilio WhatsApp
     TWILIO_ACCOUNT_SID: Optional[str] = os.getenv("TWILIO_ACCOUNT_SID")
@@ -57,6 +40,7 @@ class Settings(BaseModel):
     # App URLs
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
+    VERCEL_URL: str = os.getenv("VERCEL_URL", "https://purna-cashback.vercel.app")
     
     # File Upload
     MAX_FILE_SIZE: int = 5242880  # 5MB

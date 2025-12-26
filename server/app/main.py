@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 # Import routers (will create these next)
-# from app.api import auth, rewards, admin, reels
+# from app.api import auth, user, admin, admin_auth, rewards, reels, videos, products, qr, admin_products
 
 from app.database import engine, Base
 from app.config import settings
@@ -30,7 +30,12 @@ app = FastAPI(
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://purna-cashback.vercel.app",
+        "http://194.238.18.10"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,15 +45,19 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 # Include API routers
-from app.api import auth, rewards, reels, admin, videos, admin_auth, user
+from app.api import auth, user, admin, admin_auth, rewards, reels, videos, products, qr, admin_products
 
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(rewards.router, prefix="/api/rewards", tags=["Rewards"])
-app.include_router(reels.router, prefix="/api/reels", tags=["Reels"])
-app.include_router(user.router, prefix="/api/user", tags=["User Dashboard"])
-app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
-app.include_router(videos.router, prefix="/api/videos", tags=["Videos"])
-app.include_router(admin_auth.router, prefix="/api/admin/auth", tags=["Admin Authentication"])
+# Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(admin_auth.router, prefix="/api/admin/auth", tags=["admin-auth"])
+app.include_router(user.router, prefix="/api/user", tags=["user"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(rewards.router, prefix="/api/rewards", tags=["rewards"])
+app.include_router(reels.router, prefix="/api/reels", tags=["reels"])
+app.include_router(videos.router, prefix="/api/videos", tags=["videos"])
+app.include_router(products.router, prefix="/api/products", tags=["products"])
+app.include_router(qr.router, prefix="/api/qr", tags=["qr"])
+app.include_router(admin_products.router, prefix="/api/admin/catalog", tags=["admin-catalog"])
 
 @app.get("/")
 async def root():

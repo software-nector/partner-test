@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { adminService } from '../../services/adminService'
 import toast from 'react-hot-toast'
+import {
+    Award, Clock, CheckCircle, XCircle, Banknote,
+    Filter, Search, ArrowRight, CornerDownRight,
+    DollarSign, Eye, Download, ExternalLink, ShieldCheck,
+    ChevronRight, CreditCard, Activity, Calendar
+} from 'lucide-react'
 
 export default function RewardsList() {
     const [rewards, setRewards] = useState([])
@@ -76,246 +82,228 @@ export default function RewardsList() {
             .reduce((sum, r) => sum + (r.payment_amount || 0), 0)
     }
 
-    const getPlatformIcon = (platform) => {
-        const icons = {
-            amazon: '🛒',
-            flipkart: '🛍️',
-            meesho: '📦',
-            myntra: '👗',
-            other: '🏪'
-        }
-        return icons[platform?.toLowerCase()] || '🏪'
-    }
-
     const getStatusBadge = (status) => {
         const badges = {
-            pending: 'bg-yellow-500/20 text-yellow-300',
-            approved: 'bg-green-500/20 text-green-300',
-            rejected: 'bg-red-500/20 text-red-300',
-            paid: 'bg-blue-500/20 text-blue-300'
+            pending: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+            approved: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+            rejected: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+            paid: 'bg-blue-500/10 text-blue-500 border-blue-500/20'
         }
-        return badges[status] || badges.pending
+        return badges[status] || 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+    }
+
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'pending': return <Clock size={12} />
+            case 'approved': return <CheckCircle size={12} />
+            case 'rejected': return <XCircle size={12} />
+            case 'paid': return <Banknote size={12} />
+            default: return <Activity size={12} />
+        }
     }
 
     const filters = [
-        { value: 'all', label: 'All', icon: '📋' },
-        { value: 'pending', label: 'Pending', icon: '⏳' },
-        { value: 'approved', label: 'Approved', icon: '✅' },
-        { value: 'rejected', label: 'Rejected', icon: '❌' },
-        { value: 'paid', label: 'Paid', icon: '💵' }
+        { value: 'all', label: 'All Audits', icon: <Filter size={14} /> },
+        { value: 'pending', label: 'Pending', icon: <Clock size={14} /> },
+        { value: 'approved', label: 'Approved', icon: <CheckCircle size={14} /> },
+        { value: 'rejected', label: 'Rejected', icon: <XCircle size={14} /> },
+        { value: 'paid', label: 'Paid', icon: <Banknote size={14} /> }
     ]
 
     const approvedRewards = rewards.filter(r => r.status === 'approved')
 
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold gradient-text mb-2">Rewards Management</h1>
-                <p className="text-gray-400">Review and manage reward claims</p>
-            </div>
+        <div className="p-6 lg:p-10 space-y-10">
+            <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Award className="text-blue-500 w-5 h-5" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Financial Suite</span>
+                    </div>
+                    <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight">Rewards Audit</h1>
+                    <p className="text-slate-500 mt-1 font-medium">Verify claims and authorize cashback disbursements</p>
+                </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-6">
-                {filters.map((f) => (
-                    <button
-                        key={f.value}
-                        onClick={() => setFilter(f.value)}
-                        className={`px-4 py-2 rounded-xl font-semibold transition flex items-center gap-2 ${filter === f.value
-                            ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
-                            : 'glass hover:bg-white/10'
-                            }`}
+                <div className="flex gap-3">
+                    {filters.map((f) => (
+                        <button
+                            key={f.value}
+                            onClick={() => setFilter(f.value)}
+                            className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 border ${filter === f.value
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20'
+                                : 'bg-white/5 text-slate-500 border-white/5 hover:text-slate-200 hover:bg-white/10'
+                                }`}
+                        >
+                            {f.icon}
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
+            </header>
+
+            {/* High Fidelity Summary Bar */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-[#0b1022] p-6 rounded-[2rem] border border-white/5 flex items-center justify-between">
+                    <div>
+                        <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Queue Size</div>
+                        <div className="text-3xl font-black text-white">{rewards.length}</div>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 text-blue-500 rounded-2xl border border-blue-500/10">
+                        <Activity size={24} />
+                    </div>
+                </div>
+                <div className="bg-[#0b1022] p-6 rounded-[2rem] border border-white/5 flex items-center justify-between">
+                    <div>
+                        <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Approved for Pay</div>
+                        <div className="text-3xl font-black text-white">{approvedRewards.length}</div>
+                    </div>
+                    <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-2xl border border-emerald-500/10">
+                        <CheckCircle size={24} />
+                    </div>
+                </div>
+                {filter === 'approved' && approvedRewards.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-blue-600 p-6 rounded-[2rem] flex items-center justify-between text-white shadow-xl shadow-blue-600/20"
                     >
-                        <span>{f.icon}</span>
-                        {f.label}
-                    </button>
-                ))}
-            </div>
-
-            {/* Bulk Payment Bar */}
-            {filter === 'approved' && approvedRewards.length > 0 && (
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="glass rounded-2xl p-6 mb-6"
-                >
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
-                            <h3 className="text-xl font-bold text-white mb-1">Bulk Payment</h3>
-                            <p className="text-gray-400 text-sm">
-                                {selectedRewards.length} selected | Total: ₹{getTotalAmount()}
-                            </p>
+                            <div className="text-[10px] font-black text-blue-100/60 uppercase tracking-widest mb-1 uppercase italic">Bulk Summary</div>
+                            <div className="text-2xl font-black">₹{getTotalAmount()}</div>
                         </div>
                         <button
                             onClick={() => setShowBulkPaymentModal(true)}
                             disabled={selectedRewards.length === 0}
-                            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-white text-blue-600 px-6 py-3 rounded-2xl font-black text-xs hover:scale-105 transition disabled:opacity-50"
                         >
-                            💵 Process Payment ({selectedRewards.length})
+                            PAY ({selectedRewards.length})
                         </button>
-                    </div>
-                </motion.div>
-            )}
+                    </motion.div>
+                )}
+            </div>
 
-            {/* Rewards List */}
+            {/* Audit Log List */}
             {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <div className="py-24 flex items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-white/5 border-t-blue-500 rounded-full animate-spin"></div>
                 </div>
             ) : rewards.length === 0 ? (
-                <div className="glass rounded-2xl p-12 text-center">
-                    <p className="text-2xl text-gray-400">No rewards found</p>
+                <div className="bg-[#0b1022] rounded-[3rem] border border-white/5 p-24 text-center">
+                    <Award className="w-16 h-16 text-slate-800 mx-auto mb-6 opacity-20" />
+                    <p className="text-slate-600 font-black uppercase tracking-widest text-sm">No Audit Records Found</p>
                 </div>
             ) : (
-                <div className="grid gap-4">
-                    {rewards.map((reward) => (
+                <div className="space-y-4">
+                    {rewards.map((reward, idx) => (
                         <motion.div
                             key={reward.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="glass rounded-2xl p-6 hover:bg-white/5 transition"
+                            transition={{ delay: idx * 0.05 }}
+                            className={`group bg-[#0b1022] p-6 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all ${selectedRewards.includes(reward.id) ? 'border-blue-500/50 bg-blue-500/5' : ''}`}
                         >
-                            <div className="flex flex-col lg:flex-row gap-6">
-                                {/* Checkbox for approved rewards */}
+                            <div className="flex flex-col lg:flex-row gap-8 items-start">
+                                {/* Checklist Circle */}
                                 {reward.status === 'approved' && (
-                                    <div className="flex items-start">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedRewards.includes(reward.id)}
-                                            onChange={() => toggleRewardSelection(reward.id)}
-                                            className="w-5 h-5 mt-1 rounded border-2 border-blue-500 bg-transparent checked:bg-blue-600 cursor-pointer"
-                                        />
-                                    </div>
+                                    <button
+                                        onClick={() => toggleRewardSelection(reward.id)}
+                                        className={`w-10 h-10 rounded-2xl flex items-center justify-center border transition-all ${selectedRewards.includes(reward.id) ? 'bg-blue-600 border-blue-600' : 'bg-white/5 border-white/5 hover:border-blue-500/30'}`}
+                                    >
+                                        <CheckCircle size={18} className={selectedRewards.includes(reward.id) ? 'text-white' : 'text-slate-700'} />
+                                    </button>
                                 )}
 
-                                {/* User Info */}
-                                <div className="flex-1">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white mb-1">{reward.name}</h3>
-                                            <p className="text-gray-400 text-sm">{reward.phone}</p>
-                                            {reward.email && <p className="text-gray-400 text-sm">{reward.email}</p>}
+                                {/* Main Audit Content */}
+                                <div className="flex-1 space-y-6">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-slate-300 border border-white/5 uppercase">
+                                                {reward.name[0]}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white tracking-tight leading-tight">{reward.name}</h3>
+                                                <div className="flex items-center gap-4 text-[10px] font-bold text-slate-600 mt-1">
+                                                    <span className="flex items-center gap-1"><CreditCard size={10} /> {reward.phone}</span>
+                                                    <span className="flex items-center gap-1 uppercase tracking-widest"><Calendar size={10} /> {new Date(reward.purchase_date).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusBadge(reward.status)}`}>
+                                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${getStatusBadge(reward.status)}`}>
+                                            {getStatusIcon(reward.status)}
                                             {reward.status}
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-2 text-sm">
-                                        <p><span className="text-gray-400">Product:</span> <span className="text-white font-semibold">{reward.product_name}</span></p>
-
-                                        {/* Platform Badge */}
-                                        {reward.platform_name && (
-                                            <p>
-                                                <span className="text-gray-400">Platform:</span>{' '}
-                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs font-semibold">
-                                                    {getPlatformIcon(reward.platform_name)}
-                                                    {reward.platform_name}
-                                                </span>
-                                            </p>
-                                        )}
-
-                                        <p><span className="text-gray-400">Purchase Date:</span> <span className="text-white">{new Date(reward.purchase_date).toLocaleDateString()}</span></p>
-                                        {reward.upi_id && <p><span className="text-gray-400">UPI ID:</span> <span className="text-white">{reward.upi_id}</span></p>}
-                                        {reward.payment_amount && <p><span className="text-gray-400">Amount:</span> <span className="text-green-400 font-bold">₹{reward.payment_amount}</span></p>}
-                                        {reward.admin_notes && (
-                                            <p className="mt-2 p-3 bg-blue-500/10 rounded-lg">
-                                                <span className="text-gray-400">Admin Notes:</span> <span className="text-white">{reward.admin_notes}</span>
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Screenshot & AI Analysis */}
-                                <div className="mt-6 space-y-4">
-                                    {/* Screenshot Image */}
-                                    <div className="relative group">
-                                        <img
-                                            src={`http://localhost:8000${reward.review_screenshot}`}
-                                            alt="Review Screenshot"
-                                            className="w-full h-auto rounded-xl border border-white/10 cursor-pointer hover:border-white/30 transition"
-                                            onClick={() => {
-                                                setSelectedImage(reward.review_screenshot)
-                                                setShowImageModal(true)
-                                            }}
-                                            onError={(e) => {
-                                                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23333" width="400" height="300"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImage not found%3C/text%3E%3C/svg%3E'
-                                            }}
-                                        />
-                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-xl">
-                                            <span className="text-white font-semibold">🔍 Click to Zoom</span>
                                         </div>
                                     </div>
 
-                                    {/* AI Analysis */}
-                                    {reward.ai_verified && (
-                                        <div className="glass rounded-xl p-4 border border-white/10">
-                                            <h4 className="text-white font-bold mb-3 flex items-center gap-2">
-                                                <span>🤖</span> AI Analysis
-                                                {reward.ai_analysis_status === 'success' && <span className="text-green-400 text-xs">✓ Verified</span>}
-                                            </h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                                        <div>
+                                            <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Product Audit</div>
+                                            <div className="text-xs font-bold text-slate-200 line-clamp-1">{reward.product_name}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Platform</div>
+                                            <div className="text-xs font-bold text-blue-400 capitalize flex items-center gap-1">
+                                                <ExternalLink size={10} /> {reward.platform_name || 'Generic Purchase'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Payout Detail</div>
+                                            <div className="text-sm font-black text-emerald-500">₹{reward.payment_amount || 100}</div>
+                                        </div>
+                                    </div>
 
-                                            {/* Rating */}
-                                            {reward.detected_rating && (
-                                                <div className="mb-3">
-                                                    <p className="text-gray-400 text-sm mb-1">Detected Rating:</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                <span key={i} className={`text-2xl ${i < reward.detected_rating ? 'text-yellow-400' : 'text-gray-600'}`}>
-                                                                    ⭐
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                        <span className="text-white font-bold text-lg">{reward.detected_rating}/5</span>
-                                                        {reward.ai_confidence && (
-                                                            <span className="text-gray-400 text-xs">
-                                                                ({Math.round(reward.ai_confidence * 100)}% confidence)
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Comment */}
-                                            {reward.detected_comment && (
-                                                <div>
-                                                    <p className="text-gray-400 text-sm mb-1">Review Comment:</p>
-                                                    <p className="text-white bg-white/5 p-3 rounded-lg text-sm italic">
-                                                        "{reward.detected_comment}"
-                                                    </p>
-                                                </div>
-                                            )}
+                                    {reward.admin_notes && (
+                                        <div className="flex gap-2 items-start text-xs font-medium text-amber-500/80 bg-amber-500/5 p-4 rounded-xl border border-amber-500/10">
+                                            <Info size={14} className="mt-0.5 shrink-0" />
+                                            <span>{reward.admin_notes}</span>
                                         </div>
                                     )}
+                                </div>
 
-                                    {/* Action Buttons */}
-                                    <div className="flex flex-wrap gap-3">
+                                {/* Review Verification Visuals */}
+                                <div className="w-full lg:w-48 space-y-4">
+                                    <div
+                                        onClick={() => {
+                                            setSelectedImage(reward.review_screenshot)
+                                            setShowImageModal(true)
+                                        }}
+                                        className="aspect-[4/5] bg-slate-900 rounded-2xl border border-white/5 overflow-hidden relative group cursor-pointer"
+                                    >
+                                        <img
+                                            src={`http://194.238.18.10${reward.review_screenshot}`}
+                                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                                            onError={(e) => {
+                                                e.target.src = 'https://via.placeholder.com/200x250?text=Proof+Not+Found'
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/20 flex items-center justify-center transition-all">
+                                            <Eye size={20} className="text-white opacity-0 group-hover:opacity-100" />
+                                        </div>
+                                    </div>
+
+                                    {/* Action Hub */}
+                                    <div className="flex gap-2">
                                         {reward.status === 'pending' && (
                                             <>
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedReward(reward)
-                                                        setShowModal(true)
-                                                    }}
-                                                    className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg font-semibold transition"
+                                                    onClick={() => { setSelectedReward(reward); setShowModal(true) }}
+                                                    className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-emerald-500 transition-all"
                                                 >
-                                                    ✅ Approve
+                                                    Audit OK
                                                 </button>
                                                 <button
                                                     onClick={() => handleStatusUpdate(reward.id, 'rejected')}
-                                                    className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg font-semibold transition"
+                                                    className="p-3 bg-rose-600/10 text-rose-500 hover:bg-rose-600 hover:text-white rounded-xl transition-all"
                                                 >
-                                                    ❌ Reject
+                                                    <XCircle size={14} />
                                                 </button>
                                             </>
                                         )}
-
                                         {reward.status === 'approved' && !selectedRewards.includes(reward.id) && (
                                             <button
                                                 onClick={() => handleStatusUpdate(reward.id, 'paid')}
-                                                className="flex-1 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg font-semibold transition"
+                                                className="w-full py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"
                                             >
-                                                💵 Mark as Paid
+                                                <CreditCard size={12} /> Pay Now
                                             </button>
                                         )}
                                     </div>
@@ -326,154 +314,112 @@ export default function RewardsList() {
                 </div>
             )}
 
-            {/* Approval Modal */}
-            {showModal && selectedReward && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="glass rounded-2xl p-8 max-w-md w-full"
-                    >
-                        <h2 className="text-2xl font-bold mb-4">Approve Reward</h2>
-                        <p className="text-gray-400 mb-4">Add notes for {selectedReward.name}</p>
-
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Optional admin notes..."
-                            className="w-full px-4 py-3 rounded-xl glass border border-white/10 focus:border-blue-500 outline-none mb-4"
-                            rows={4}
-                        />
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => handleStatusUpdate(selectedReward.id, 'approved')}
-                                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold hover:shadow-lg transition"
-                            >
-                                Approve
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowModal(false)
-                                    setNotes('')
-                                }}
-                                className="flex-1 px-4 py-3 glass rounded-xl font-bold hover:bg-white/10 transition"
-                            >
-                                Cancel
-                            </button>
+            {/* Redesigned Modals */}
+            <AnimatePresence>
+                {showModal && (
+                    <Modal title="Auth Confirmation" onClose={() => setShowModal(false)}>
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                    <ShieldCheck size={20} />
+                                </div>
+                                <div className="text-sm font-bold text-slate-300">Authorize reward for {selectedReward?.name}</div>
+                            </div>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Internal audit notes (optional)..."
+                                className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm font-medium focus:border-blue-500 transition-all h-32 outline-none"
+                            />
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => handleStatusUpdate(selectedReward.id, 'approved')}
+                                    className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase shadow-xl shadow-blue-600/10"
+                                >
+                                    Confirm Audit
+                                </button>
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="px-8 py-4 bg-white/5 text-slate-500 rounded-2xl font-black text-xs uppercase border border-white/5"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
-                    </motion.div>
+                    </Modal>
+                )}
+
+                {showBulkPaymentModal && (
+                    <Modal title="Treasury Pay-Out" onClose={() => setShowBulkPaymentModal(false)}>
+                        <div className="space-y-8">
+                            <div className="bg-emerald-600/10 border border-emerald-500/10 p-8 rounded-[2rem] text-center">
+                                <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2 italic">Authorize Total Disbursement</div>
+                                <div className="text-5xl font-black text-white tracking-tighter">₹{getTotalAmount()}</div>
+                                <p className="text-[10px] text-slate-600 mt-4 font-bold uppercase tracking-[0.2em]">{selectedRewards.length} Verified Claims</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 ml-1">Transaction Identity</label>
+                                <input
+                                    type="text"
+                                    value={transactionId}
+                                    onChange={(e) => setTransactionId(e.target.value)}
+                                    placeholder="Enter UTR / Tx ID..."
+                                    className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm font-bold focus:border-blue-500 transition-all outline-none"
+                                />
+                            </div>
+
+                            <div className="flex gap-4 pt-4">
+                                <button
+                                    onClick={handleBulkPayment}
+                                    className="flex-1 py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-xs uppercase shadow-xl shadow-blue-600/20 flex items-center justify-center gap-2"
+                                >
+                                    <CreditCard size={14} /> Execute Payment
+                                </button>
+                                <button
+                                    onClick={() => setShowBulkPaymentModal(false)}
+                                    className="px-8 py-5 bg-white/5 text-slate-600 rounded-[1.5rem] font-black text-xs uppercase border border-white/5"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </Modal>
+                )}
+
+                {showImageModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl transition-all" onClick={() => setShowImageModal(false)}>
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative max-w-5xl w-full h-full flex flex-col justify-center items-center gap-8" onClick={e => e.stopPropagation()}>
+                            <img src={`http://194.238.18.10${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[2rem] shadow-[0_0_100px_rgba(59,130,246,0.1)] border border-white/10" />
+                            <div className="flex gap-4">
+                                <a href={`http://194.238.18.10${selectedImage}`} download className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all"><Download size={20} /></a>
+                                <a href={`http://194.238.18.10${selectedImage}`} target="_blank" className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all"><ExternalLink size={20} /></a>
+                                <button onClick={() => setShowImageModal(false)} className="px-8 py-4 bg-white text-black rounded-2xl font-black text-xs uppercase shadow-xl">Close Preview</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+function Modal({ title, children, onClose }) {
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose} className="absolute inset-0" />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-xl bg-[#0a0f1d] rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl"
+            >
+                <div className="flex items-center justify-between px-10 py-8 border-b border-white/5">
+                    <h2 className="font-extrabold text-2xl text-white tracking-tight uppercase italic">{title}</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition text-slate-500 hover:text-white"><XCircle size={24} /></button>
                 </div>
-            )}
-
-            {/* Bulk Payment Modal */}
-            {showBulkPaymentModal && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="glass rounded-2xl p-8 max-w-md w-full"
-                    >
-                        <h2 className="text-2xl font-bold mb-4">Confirm Bulk Payment</h2>
-                        <p className="text-gray-400 mb-6">
-                            You are about to pay {selectedRewards.length} rewards
-                        </p>
-
-                        <div className="mb-6 p-4 bg-blue-500/10 rounded-xl">
-                            <p className="text-white font-bold text-2xl">₹{getTotalAmount()}</p>
-                            <p className="text-gray-400 text-sm">Total Amount</p>
-                        </div>
-
-                        <input
-                            type="text"
-                            value={transactionId}
-                            onChange={(e) => setTransactionId(e.target.value)}
-                            placeholder="Transaction ID (optional)"
-                            className="w-full px-4 py-3 rounded-xl glass border border-white/10 focus:border-blue-500 outline-none mb-4"
-                        />
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleBulkPayment}
-                                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl font-bold hover:shadow-lg transition"
-                            >
-                                Confirm Payment
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowBulkPaymentModal(false)
-                                    setTransactionId('')
-                                }}
-                                className="flex-1 px-4 py-3 glass rounded-xl font-bold hover:bg-white/10 transition"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
-
-            {/* Image Viewer Modal */}
-            {showImageModal && (
-                <div
-                    className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowImageModal(false)}
-                >
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="relative max-w-4xl w-full"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Close Button */}
-                        <button
-                            onClick={() => setShowImageModal(false)}
-                            className="absolute -top-12 right-0 text-white hover:text-red-400 transition"
-                        >
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-
-                        {/* Image */}
-                        <img
-                            src={`http://localhost:8000${selectedImage}`}
-                            alt="Screenshot"
-                            className="w-full h-auto rounded-xl shadow-2xl"
-                            onError={(e) => {
-                                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23333" width="400" height="300"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImage not found%3C/text%3E%3C/svg%3E'
-                            }}
-                        />
-
-                        {/* Download Button */}
-                        <div className="mt-4 flex justify-center gap-4">
-                            <a
-                                href={`http://localhost:8000${selectedImage}`}
-                                download
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold transition flex items-center gap-2"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                Download
-                            </a>
-                            <a
-                                href={`http://localhost:8000${selectedImage}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-6 py-3 glass hover:bg-white/10 rounded-xl font-bold transition flex items-center gap-2"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                                Open in New Tab
-                            </a>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
+                <div className="p-10">{children}</div>
+            </motion.div>
         </div>
     )
 }

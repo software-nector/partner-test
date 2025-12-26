@@ -23,6 +23,14 @@ VIDEOS = [
         "video_url": "https://www.w3schools.com/html/mov_bbb.mp4",
         "thumbnail_url": "https://via.placeholder.com/640x360",
         "duration": 60
+    },
+    {
+        "id": "founder_story",
+        "title": "A Doctor's Vision: The Story of Purna Gummies",
+        "description": "I am a doctor with 32 years of experience dedicated to improving lives. After seeing the critical need for proper nutrition in women's health, I founded this company to provide professional care through delicious and healthy gummies.",
+        "video_url": "http://localhost:8000/uploads/founder_video.mp4",
+        "thumbnail_url": "https://via.placeholder.com/640x360",
+        "duration": 90
     }
 ]
 

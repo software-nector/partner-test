@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { adminService } from '../../services/adminService'
 import toast from 'react-hot-toast'
+import {
+    Film, Clock, CheckCircle, XCircle, Truck,
+    Filter, ExternalLink, Play, Eye, Download,
+    ChevronRight, MapPin, Instagram, Info,
+    Package, Send, Activity
+} from 'lucide-react'
 
 export default function ReelsList() {
     const [reels, setReels] = useState([])
@@ -48,141 +54,179 @@ export default function ReelsList() {
 
     const getStatusBadge = (status) => {
         const badges = {
-            pending: 'bg-yellow-500/20 text-yellow-300',
-            approved: 'bg-green-500/20 text-green-300',
-            rejected: 'bg-red-500/20 text-red-300',
-            shipped: 'bg-blue-500/20 text-blue-300'
+            pending: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+            approved: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+            rejected: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+            shipped: 'bg-blue-500/10 text-blue-500 border-blue-500/20'
         }
-        return badges[status] || badges.pending
+        return badges[status] || 'bg-slate-500/10 text-slate-500 border-slate-500/20'
     }
 
     const filters = [
-        { value: 'all', label: 'All', icon: '📋' },
-        { value: 'pending', label: 'Pending', icon: '⏳' },
-        { value: 'approved', label: 'Approved', icon: '✅' },
-        { value: 'rejected', label: 'Rejected', icon: '❌' },
-        { value: 'shipped', label: 'Shipped', icon: '🚚' }
+        { value: 'all', label: 'All Submissions', icon: <Filter size={14} /> },
+        { value: 'pending', label: 'Pending', icon: <Clock size={14} /> },
+        { value: 'approved', label: 'Approved', icon: <CheckCircle size={14} /> },
+        { value: 'rejected', label: 'Rejected', icon: <XCircle size={14} /> },
+        { value: 'shipped', label: 'Shipped', icon: <Truck size={14} /> }
     ]
 
     return (
-        <div>
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold gradient-text mb-2">Reels Management</h1>
-                <p className="text-gray-400">Review and manage reel submissions</p>
-            </div>
+        <div className="p-6 lg:p-10 space-y-10">
+            <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Film className="text-purple-500 w-5 h-5" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Creator Hub</span>
+                    </div>
+                    <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-none">Influencer Reels</h1>
+                    <p className="text-slate-500 mt-2 font-medium">Moderate submissions and manage gift logistics</p>
+                </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-6">
-                {filters.map((f) => (
-                    <button
-                        key={f.value}
-                        onClick={() => setFilter(f.value)}
-                        className={`px-4 py-2 rounded-xl font-semibold transition flex items-center gap-2 ${filter === f.value
-                            ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
-                            : 'glass hover:bg-white/10'
-                            }`}
-                    >
-                        <span>{f.icon}</span>
-                        {f.label}
-                    </button>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                    {filters.map((f) => (
+                        <button
+                            key={f.value}
+                            onClick={() => setFilter(f.value)}
+                            className={`px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 border shrink-0 ${filter === f.value
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-xl shadow-purple-600/20'
+                                : 'bg-white/5 text-slate-500 border-white/5 hover:text-slate-200 hover:bg-white/10'
+                                }`}
+                        >
+                            {f.icon}
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
+            </header>
+
+            {/* Performance Bar */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[
+                    { label: 'Total Content', value: reels.length, icon: <Film size={18} />, color: 'text-purple-400' },
+                    { label: 'Awaiting Audit', value: reels.filter(r => r.status === 'pending').length, icon: <Clock size={18} />, color: 'text-amber-400' },
+                    { label: 'Verified Creators', value: reels.filter(r => r.status === 'approved' || r.status === 'shipped').length, icon: <CheckCircle size={18} />, color: 'text-emerald-400' },
+                    { label: 'Dispatched Gifts', value: reels.filter(r => r.status === 'shipped').length, icon: <Truck size={18} />, color: 'text-blue-400' },
+                ].map((s, i) => (
+                    <div key={i} className="bg-[#0b1022] p-5 rounded-[1.5rem] border border-white/5 flex items-center gap-4">
+                        <div className={`p-3 rounded-xl bg-white/5 border border-white/5 ${s.color}`}>{s.icon}</div>
+                        <div>
+                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">{s.label}</div>
+                            <div className="text-xl font-black text-white">{s.value}</div>
+                        </div>
+                    </div>
                 ))}
             </div>
 
-            {/* Reels List */}
+            {/* Content List */}
             {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                <div className="py-32 flex items-center justify-center">
+                    <div className="w-10 h-10 border-2 border-white/5 border-t-purple-500 rounded-full animate-spin"></div>
                 </div>
             ) : reels.length === 0 ? (
-                <div className="glass rounded-2xl p-12 text-center">
-                    <p className="text-2xl text-gray-400">No reels found</p>
+                <div className="bg-[#0b1022] rounded-[3rem] border border-white/5 p-32 text-center opacity-40">
+                    <Film className="w-16 h-16 text-slate-800 mx-auto mb-6" />
+                    <p className="text-slate-600 font-black uppercase tracking-widest text-sm">No Social Content Found</p>
                 </div>
             ) : (
-                <div className="grid gap-4">
-                    {reels.map((reel) => (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {reels.map((reel, idx) => (
                         <motion.div
                             key={reel.id}
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="glass rounded-2xl p-6 hover:bg-white/5 transition"
+                            transition={{ delay: idx * 0.05 }}
+                            className="group bg-[#0b1022] rounded-[2.5rem] border border-white/5 hover:border-purple-500/30 transition-all overflow-hidden flex flex-col md:flex-row shadow-2xl"
                         >
-                            <div className="flex flex-col lg:flex-row gap-6">
-                                {/* User Info */}
-                                <div className="flex-1">
-                                    <div className="flex items-start justify-between mb-4">
+                            {/* Visual Preview Section */}
+                            <div className="w-full md:w-56 h-72 md:h-auto bg-slate-900 relative group/preview overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
+                                <div className="absolute inset-0 flex items-center justify-center z-20">
+                                    <button
+                                        onClick={() => window.open(reel.reel_url, '_blank')}
+                                        className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white scale-90 opacity-0 group-hover/preview:scale-100 group-hover/preview:opacity-100 transition-all border border-white/20"
+                                    >
+                                        <Play fill="white" size={20} className="ml-1" />
+                                    </button>
+                                </div>
+                                <div className="absolute bottom-6 left-6 z-20">
+                                    <div className="flex items-center gap-2 text-white font-black text-xs italic uppercase tracking-tighter">
+                                        <Instagram size={14} className="text-pink-500" />
+                                        @{reel.social_username}
+                                    </div>
+                                </div>
+                                {/* Placeholder / Poster feel */}
+                                <div className="w-full h-full bg-gradient-to-br from-purple-900/40 to-slate-900 flex items-center justify-center text-slate-700">
+                                    <Film size={48} />
+                                </div>
+                            </div>
+
+                            {/* Creator Content Section */}
+                            <div className="flex-1 p-8 space-y-6 flex flex-col justify-between">
+                                <div className="space-y-4">
+                                    <div className="flex items-start justify-between">
                                         <div>
-                                            <h3 className="text-xl font-bold text-white mb-1">{reel.name}</h3>
-                                            <p className="text-gray-400 text-sm">{reel.phone}</p>
-                                            {reel.email && <p className="text-gray-400 text-sm">{reel.email}</p>}
+                                            <h3 className="text-xl font-bold text-white tracking-tight leading-none mb-1">{reel.name}</h3>
+                                            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{reel.phone}</div>
                                         </div>
-                                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusBadge(reel.status)}`}>
+                                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border flex items-center gap-1.5 ${getStatusBadge(reel.status)}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${reel.status === 'shipped' ? 'bg-blue-500' : 'bg-current'} animate-pulse`} />
                                             {reel.status}
-                                        </span>
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2 text-sm">
-                                        <p><span className="text-gray-400">Address:</span> <span className="text-white">{reel.address}</span></p>
-                                        <p><span className="text-gray-400">Social Username:</span> <span className="text-white">@{reel.social_username}</span></p>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-3 items-start p-4 bg-white/[0.02] rounded-2xl border border-white/5">
+                                            <MapPin size={16} className="text-slate-700 mt-1 shrink-0" />
+                                            <div className="text-xs font-medium text-slate-400 line-clamp-2 leading-relaxed">{reel.address}</div>
+                                        </div>
+
                                         {reel.tracking_number && (
-                                            <p className="mt-2 p-3 bg-blue-500/10 rounded-lg">
-                                                <span className="text-gray-400">Tracking:</span> <span className="text-white font-mono">{reel.tracking_number}</span>
-                                            </p>
-                                        )}
-                                        {reel.admin_notes && (
-                                            <p className="mt-2 p-3 bg-blue-500/10 rounded-lg">
-                                                <span className="text-gray-400">Admin Notes:</span> <span className="text-white">{reel.admin_notes}</span>
-                                            </p>
+                                            <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/5 border border-blue-500/10 rounded-xl text-blue-400 font-bold text-[10px] uppercase tracking-widest">
+                                                <Truck size={12} /> Log: {reel.tracking_number}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Actions */}
-                                <div className="flex flex-col gap-3 lg:w-48">
-                                    <button
-                                        onClick={() => window.open(reel.reel_url, '_blank')}
-                                        className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg font-semibold transition"
-                                    >
-                                        🎬 View Reel
-                                    </button>
-
-                                    {reel.brand_tag_proof_url && (
-                                        <button
-                                            onClick={() => {
-                                                setSelectedImage(reel.brand_tag_proof_url)
-                                                setShowImageModal(true)
-                                            }}
-                                            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg font-semibold transition"
-                                        >
-                                            📷 View Proof
-                                        </button>
-                                    )}
-
+                                <div className="flex gap-3 pt-4">
                                     {reel.status === 'pending' && (
                                         <>
                                             <button
                                                 onClick={() => handleStatusUpdate(reel.id, 'approved')}
-                                                className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg font-semibold transition"
+                                                className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl hover:bg-emerald-500 transition-all"
                                             >
-                                                ✅ Approve
+                                                Verify Creator
                                             </button>
                                             <button
                                                 onClick={() => handleStatusUpdate(reel.id, 'rejected')}
-                                                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg font-semibold transition"
+                                                className="px-6 py-4 bg-white/5 text-slate-600 rounded-2xl transition hover:bg-rose-600 hover:text-white"
                                             >
-                                                ❌ Reject
+                                                <XCircle size={16} />
                                             </button>
                                         </>
                                     )}
 
                                     {reel.status === 'approved' && (
                                         <button
-                                            onClick={() => {
-                                                setSelectedReel(reel)
-                                                setShowModal(true)
-                                            }}
-                                            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg font-semibold transition"
+                                            onClick={() => { setSelectedReel(reel); setShowModal(true) }}
+                                            className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center justify-center gap-3 transition-all"
                                         >
-                                            🚚 Mark as Shipped
+                                            <Package size={16} /> Mark Dispatch
+                                        </button>
+                                    )}
+
+                                    {reel.status === 'shipped' && (
+                                        <div className="w-full py-4 bg-white/[0.03] border border-white/5 text-slate-600 rounded-2xl text-[10px] font-black uppercase text-center flex items-center justify-center gap-2">
+                                            <CheckCircle size={12} className="text-emerald-500" /> Fulfilled
+                                        </div>
+                                    )}
+
+                                    {reel.brand_tag_proof_url && (
+                                        <button
+                                            onClick={() => { setSelectedImage(reel.brand_tag_proof_url); setShowImageModal(true) }}
+                                            className="p-4 bg-white/5 border border-white/5 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl"
+                                        >
+                                            <Eye size={18} />
                                         </button>
                                     )}
                                 </div>
@@ -192,116 +236,97 @@ export default function ReelsList() {
                 </div>
             )}
 
-            {/* Shipping Modal */}
-            {showModal && selectedReel && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="glass rounded-2xl p-8 max-w-md w-full"
-                    >
-                        <h2 className="text-2xl font-bold mb-4">Mark as Shipped</h2>
-                        <p className="text-gray-400 mb-4">Add tracking number for {selectedReel.name}</p>
+            {/* Redesigned Shipment Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <Modal title="Logistics Authorization" onClose={() => setShowModal(false)}>
+                        <div className="space-y-8">
+                            <div className="p-8 bg-blue-600/10 border border-blue-500/10 rounded-[2.5rem] flex flex-col items-center gap-4 text-center">
+                                <div className="w-16 h-16 bg-blue-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-blue-500/20">
+                                    <Send size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-white italic">DISPATCH GIFT MODULE</h3>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Order ID: {selectedReel?.id}</p>
+                                </div>
+                            </div>
 
-                        <input
-                            type="text"
-                            value={trackingNumber}
-                            onChange={(e) => setTrackingNumber(e.target.value)}
-                            placeholder="Tracking number..."
-                            className="w-full px-4 py-3 rounded-xl glass border border-white/10 focus:border-blue-500 outline-none mb-4"
-                        />
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 ml-1 italic">Tracking Number</label>
+                                    <input
+                                        type="text"
+                                        value={trackingNumber}
+                                        onChange={(e) => setTrackingNumber(e.target.value)}
+                                        placeholder="Enter AWB / SpeedPost ID..."
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm font-bold focus:border-blue-500 transition-all outline-none uppercase shadow-inner"
+                                    />
+                                </div>
 
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Optional admin notes..."
-                            className="w-full px-4 py-3 rounded-xl glass border border-white/10 focus:border-blue-500 outline-none mb-4"
-                            rows={3}
-                        />
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 ml-1 italic">Internal Admin Trace</label>
+                                    <textarea
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        placeholder="Add shipping notes or verification check..."
+                                        className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-white text-sm font-medium focus:border-blue-500 transition-all h-24 outline-none"
+                                    />
+                                </div>
+                            </div>
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => handleStatusUpdate(selectedReel.id, 'shipped', trackingNumber)}
-                                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold hover:shadow-lg transition"
-                            >
-                                Ship
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowModal(false)
-                                    setTrackingNumber('')
-                                    setNotes('')
-                                }}
-                                className="flex-1 px-4 py-3 glass rounded-xl font-bold hover:bg-white/10 transition"
-                            >
-                                Cancel
-                            </button>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => handleStatusUpdate(selectedReel.id, 'shipped', trackingNumber)}
+                                    className="flex-1 py-5 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3"
+                                >
+                                    Confirm Shipment <ArrowRight size={14} />
+                                </button>
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="px-8 py-5 bg-white/5 text-slate-600 rounded-3xl font-black text-xs uppercase border border-white/5 transition hover:bg-white/10"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
-                    </motion.div>
+                    </Modal>
+                )}
+
+                {showImageModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl transition-all" onClick={() => setShowImageModal(false)}>
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative max-w-5xl w-full h-full flex flex-col justify-center items-center gap-10" onClick={e => e.stopPropagation()}>
+                            <div className="relative group">
+                                <img src={`http://194.238.18.10${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[3rem] shadow-[0_0_100px_rgba(147,51,234,0.15)] border border-white/10" />
+                                <div className="absolute top-8 right-8 flex gap-4">
+                                    <a href={`http://194.238.18.10${selectedImage}`} download className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><Download size={20} /></a>
+                                    <a href={`http://194.238.18.10${selectedImage}`} target="_blank" className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><ExternalLink size={20} /></a>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowImageModal(false)} className="px-12 py-5 bg-purple-600 text-white rounded-3xl font-black text-xs uppercase shadow-2xl shadow-purple-600/30">Close Proof Viewer</button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+function Modal({ title, children, onClose }) {
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose} className="absolute inset-0" />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-xl bg-[#0a0f1d] rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl"
+            >
+                <div className="flex items-center justify-between px-10 py-8 border-b border-white/5">
+                    <h2 className="font-black text-2xl text-white tracking-tighter uppercase italic">{title}</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition text-slate-700 hover:text-white font-black">CLOSE</button>
                 </div>
-            )}
-
-            {/* Image Viewer Modal */}
-            {showImageModal && (
-                <div
-                    className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
-                    onClick={() => setShowImageModal(false)}
-                >
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="relative max-w-4xl w-full"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Close Button */}
-                        <button
-                            onClick={() => setShowImageModal(false)}
-                            className="absolute -top-12 right-0 text-white hover:text-red-400 transition"
-                        >
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-
-                        {/* Image */}
-                        <img
-                            src={`http://localhost:8000${selectedImage}`}
-                            alt="Brand Tag Proof"
-                            className="w-full h-auto rounded-xl shadow-2xl"
-                            onError={(e) => {
-                                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23333" width="400" height="300"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImage not found%3C/text%3E%3C/svg%3E'
-                            }}
-                        />
-
-                        {/* Download Button */}
-                        <div className="mt-4 flex justify-center gap-4">
-                            <a
-                                href={`http://localhost:8000${selectedImage}`}
-                                download
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold transition flex items-center gap-2"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                Download
-                            </a>
-                            <a
-                                href={`http://localhost:8000${selectedImage}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-6 py-3 glass hover:bg-white/10 rounded-xl font-bold transition flex items-center gap-2"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                                Open in New Tab
-                            </a>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
+                <div className="p-10">{children}</div>
+            </motion.div>
         </div>
     )
 }
