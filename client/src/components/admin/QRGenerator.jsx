@@ -73,7 +73,7 @@ export default function QRGenerator() {
         if (qrCodes.length === 0) return toast.error('No QR codes to download')
 
         try {
-            const url = `http://194.238.18.10/api/admin/catalog/products/${selectedProduct}/qr-pdf`
+            const url = `http://194.238.18.10:8001/api/admin/catalog/products/${selectedProduct}/qr-pdf`
             window.open(url, '_blank')
             toast.success('PDF download started!')
         } catch (error) {
@@ -269,7 +269,7 @@ export default function QRGenerator() {
                                             </div>
                                         </div>
                                         <img
-                                            src={`http://194.238.18.10/api/admin/catalog/products/${selectedProduct}/qr-image/${qr.code}`}
+                                            src={`http://194.238.18.10:8001/api/admin/catalog/products/${selectedProduct}/qr-image/${qr.code}`}
                                             alt={`QR ${qr.code}`}
                                             className="w-16 h-16 rounded-xl border border-white/10 bg-white p-1"
                                         />

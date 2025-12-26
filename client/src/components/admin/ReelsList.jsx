@@ -296,10 +296,10 @@ export default function ReelsList() {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl transition-all" onClick={() => setShowImageModal(false)}>
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative max-w-5xl w-full h-full flex flex-col justify-center items-center gap-10" onClick={e => e.stopPropagation()}>
                             <div className="relative group">
-                                <img src={`http://194.238.18.10${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[3rem] shadow-[0_0_100px_rgba(147,51,234,0.15)] border border-white/10" />
+                                <img src={`http://194.238.18.10:8001${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[3rem] shadow-[0_0_100px_rgba(147,51,234,0.15)] border border-white/10" />
                                 <div className="absolute top-8 right-8 flex gap-4">
-                                    <a href={`http://194.238.18.10${selectedImage}`} download className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><Download size={20} /></a>
-                                    <a href={`http://194.238.18.10${selectedImage}`} target="_blank" className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><ExternalLink size={20} /></a>
+                                    <a href={`http://194.238.18.10:8001${selectedImage}`} download className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><Download size={20} /></a>
+                                    <a href={`http://194.238.18.10:8001${selectedImage}`} target="_blank" className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><ExternalLink size={20} /></a>
                                 </div>
                             </div>
                             <button onClick={() => setShowImageModal(false)} className="px-12 py-5 bg-purple-600 text-white rounded-3xl font-black text-xs uppercase shadow-2xl shadow-purple-600/30">Close Proof Viewer</button>

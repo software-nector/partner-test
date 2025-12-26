@@ -68,7 +68,7 @@ export default function HomePage() {
 
     const fetchDashboard = async () => {
         try {
-            const response = await fetch('http://194.238.18.10/api/user/dashboard', {
+            const response = await fetch('http://194.238.18.10:8001/api/user/dashboard', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             })
             if (response.ok) {
@@ -84,7 +84,7 @@ export default function HomePage() {
         if (e) e.preventDefault()
         setFormLoading(true)
         try {
-            const response = await fetch('http://194.238.18.10/api/auth/whatsapp/send-otp', {
+            const response = await fetch('http://194.238.18.10:8001/api/auth/whatsapp/send-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone: loginForm.phone, coupon: loginForm.coupon })
@@ -107,7 +107,7 @@ export default function HomePage() {
         e.preventDefault()
         setFormLoading(true)
         try {
-            const response = await fetch('http://194.238.18.10/api/auth/whatsapp/verify-otp', {
+            const response = await fetch('http://194.238.18.10:8001/api/auth/whatsapp/verify-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -143,7 +143,7 @@ export default function HomePage() {
                 ? { email: emailForm.email, password: emailForm.password, name: emailForm.name }
                 : { email: emailForm.email, password: emailForm.password }
 
-            const response = await fetch(`http://194.238.18.10${endpoint}`, {
+            const response = await fetch(`http://194.238.18.10:8001${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -177,7 +177,7 @@ export default function HomePage() {
                         client_id: '1002481870605-ik6ef0o6flqocv3g0ksu1v8dmh70eme8.apps.googleusercontent.com',
                         callback: async (response) => {
                             try {
-                                const res = await fetch('http://194.238.18.10/api/auth/google/login', {
+                                const res = await fetch('http://194.238.18.10:8001/api/auth/google/login', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ token: response.credential })
@@ -234,7 +234,7 @@ export default function HomePage() {
             data.append('coupon_code', cashbackForm.couponCode)
             if (cashbackForm.screenshot) data.append('screenshot', cashbackForm.screenshot)
 
-            const response = await fetch('http://194.238.18.10/api/rewards/submit', {
+            const response = await fetch('http://194.238.18.10:8001/api/rewards/submit', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                 body: data
@@ -265,7 +265,7 @@ export default function HomePage() {
             data.append('product_name', 'Purna Gummies')
             if (videoForm.screenshot) data.append('screenshot', videoForm.screenshot)
 
-            const response = await fetch('http://194.238.18.10/api/reels/submit', {
+            const response = await fetch('http://194.238.18.10:8001/api/reels/submit', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                 body: data
