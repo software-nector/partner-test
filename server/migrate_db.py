@@ -6,59 +6,32 @@ def migrate():
     print(f"Connecting to {settings.DATABASE_URL}...")
     
     with engine.connect() as conn:
+        def add_column(table, column, type_def):
+            try:
+                print(f"Adding '{column}' to '{table}'...")
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {type_def}"))
+                conn.commit()
+                print(f"Successfully added '{column}'.")
+            except Exception as e:
+                conn.rollback()
+                if "1060" in str(e) or "Duplicate column name" in str(e):
+                    print(f"'{column}' already exists in '{table}'.")
+                else:
+                    print(f"Error adding '{column}' to '{table}': {e}")
+
         # 1. Products table
-        try:
-            print("Checking 'products' table...")
-            conn.execute(text("ALTER TABLE products ADD COLUMN cashback_amount FLOAT DEFAULT 100.0"))
-            conn.commit()
-            print("Added 'cashback_amount' to 'products'.")
-        except Exception as e:
-            conn.rollback()
-            if "Duplicate column name" in str(e) or "1060" in str(e):
-                print("'cashback_amount' already exists in 'products'.")
-            else:
-                print(f"Error migrating 'products': {e}")
+        add_column("products", "cashback_amount", "FLOAT DEFAULT 100.0")
 
         # 2. Rewards table
-        try:
-            print("Checking 'rewards' table...")
-            conn.execute(text("ALTER TABLE rewards ADD COLUMN coupon_code VARCHAR(50)"))
-            conn.execute(text("ALTER TABLE rewards ADD COLUMN admin_notes TEXT"))
-            conn.commit()
-            print("Added columns to 'rewards'.")
-        except Exception as e:
-            conn.rollback()
-            if "Duplicate column name" in str(e) or "1060" in str(e):
-                print("Columns already exist in 'rewards'.")
-            else:
-                print(f"Error migrating 'rewards': {e}")
+        add_column("rewards", "coupon_code", "VARCHAR(50)")
+        add_column("rewards", "admin_notes", "TEXT")
 
         # 3. Reels table
-        try:
-            print("Checking 'reels' table...")
-            conn.execute(text("ALTER TABLE reels ADD COLUMN admin_notes TEXT"))
-            conn.commit()
-            print("Added 'admin_notes' to 'reels'.")
-        except Exception as e:
-            conn.rollback()
-            if "Duplicate column name" in str(e) or "1060" in str(e):
-                print("'admin_notes' already exists in 'reels'.")
-            else:
-                print(f"Error migrating 'reels': {e}")
+        add_column("reels", "admin_notes", "TEXT")
 
         # 4. QR Codes table
-        try:
-            print("Checking 'qr_codes' table...")
-            conn.execute(text("ALTER TABLE qr_codes ADD COLUMN last_scanned_at DATETIME"))
-            conn.execute(text("ALTER TABLE qr_codes ADD COLUMN is_used BOOLEAN DEFAULT FALSE"))
-            conn.commit()
-            print("Added columns to 'qr_codes'.")
-        except Exception as e:
-            conn.rollback()
-            if "Duplicate column name" in str(e) or "1060" in str(e):
-                print("Columns already exist in 'qr_codes'.")
-            else:
-                print(f"Error migrating 'qr_codes': {e}")
+        add_column("qr_codes", "last_scanned_at", "DATETIME")
+        add_column("qr_codes", "is_used", "BOOLEAN DEFAULT FALSE")
 
     print("Migration finished!")
 
