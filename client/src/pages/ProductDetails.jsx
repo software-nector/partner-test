@@ -110,16 +110,16 @@ export default function ProductDetails() {
                         </p>
                     </header>
 
-                    {/* Pricing Block */}
+                    {/* Reward Block */}
                     <div className="flex items-end gap-6">
                         <div>
-                            <div className="text-[10px] font-black text-slate-600 tracking-widest uppercase mb-2">Retail Price (MRP)</div>
-                            <div className="text-6xl font-black text-white tracking-tighter italic">₹{product.mrp}</div>
+                            <div className="text-[10px] font-black text-slate-600 tracking-widest uppercase mb-2">Guaranteed Reward</div>
+                            <div className="text-6xl font-black text-emerald-400 tracking-tighter italic">₹{product.cashback_amount}</div>
                         </div>
                         <div className="pb-2">
-                            <div className="text-xs font-black text-emerald-500 uppercase tracking-widest mt-1 italic flex items-center gap-2">
-                                <CheckCircle2 size={12} />
-                                Guaranteed Reward
+                            <div className="text-xs font-black text-slate-500 uppercase tracking-widest mt-1 italic flex items-center gap-2">
+                                <CheckCircle2 size={12} className="text-emerald-500" />
+                                Instant Cashback
                             </div>
                         </div>
                     </div>

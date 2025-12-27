@@ -13,7 +13,7 @@ export default function ProductManager() {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [showCompanyModal, setShowCompanyModal] = useState(false)
-    const [newCompany, setNewCompany] = useState({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, cashback_amount: 100 }] })
+    const [newCompany, setNewCompany] = useState({ name: '', website: '', description: '', products: [{ name: '', cashback_amount: 100 }] })
 
     useEffect(() => {
         fetchData()
@@ -40,7 +40,7 @@ export default function ProductManager() {
             await productService.admin.createCompany(newCompany)
             toast.success('System: Brand Profile & Products Registered')
             setShowCompanyModal(false)
-            setNewCompany({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, cashback_amount: 100 }] })
+            setNewCompany({ name: '', website: '', description: '', products: [{ name: '', cashback_amount: 100 }] })
             fetchData()
         } catch (error) {
             toast.error('Failed to add company')
@@ -50,7 +50,7 @@ export default function ProductManager() {
     const addProductField = () => {
         setNewCompany({
             ...newCompany,
-            products: [...newCompany.products, { name: '', mrp: 0, cashback_amount: 100 }]
+            products: [...newCompany.products, { name: '', cashback_amount: 100 }]
         })
     }
 
@@ -135,7 +135,6 @@ export default function ProductManager() {
                             <tr className="border-b border-white/5 bg-white/[0.01]">
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Inventory Identity</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Brand Source</th>
-                                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Product MSRP</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Cashback Reward</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 text-right">Operations</th>
                             </tr>
@@ -158,10 +157,6 @@ export default function ProductManager() {
                                         <span className="text-[10px] font-black text-slate-400 bg-white/5 px-4 py-2 rounded-xl border border-white/5 uppercase tracking-widest">
                                             {companies.find(c => c.id === product.company_id)?.name || 'GENERIC-SKU'}
                                         </span>
-                                    </td>
-                                    <td className="px-10 py-8">
-                                        <div className="font-black text-xl text-white tracking-tighter italic">₹{product.mrp}</div>
-                                        <div className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">Retail Value</div>
                                     </td>
                                     <td className="px-10 py-8">
                                         <div className="font-black text-xl text-emerald-500 tracking-tighter italic">₹{product.cashback_amount}</div>
@@ -276,7 +271,7 @@ export default function ProductManager() {
                                                 <Trash2 size={12} />
                                             </button>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div className="sm:col-span-1">
                                                     <FormGroup label="Product Name">
                                                         <input
@@ -288,16 +283,6 @@ export default function ProductManager() {
                                                         />
                                                     </FormGroup>
                                                 </div>
-                                                <FormGroup label="MRP (₹)">
-                                                    <input
-                                                        required
-                                                        type="number"
-                                                        value={product.mrp}
-                                                        onChange={e => updateProductField(index, 'mrp', e.target.value)}
-                                                        className="premium-input h-10 py-0"
-                                                        placeholder="0.00"
-                                                    />
-                                                </FormGroup>
                                                 <FormGroup label="Cashback (₹)">
                                                     <input
                                                         required
