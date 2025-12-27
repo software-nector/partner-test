@@ -13,7 +13,7 @@ export default function ProductManager() {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [showCompanyModal, setShowCompanyModal] = useState(false)
-    const [newCompany, setNewCompany] = useState({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, selling_price: 0, cashback_amount: 100 }] })
+    const [newCompany, setNewCompany] = useState({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, cashback_amount: 100 }] })
 
     useEffect(() => {
         fetchData()
@@ -40,7 +40,7 @@ export default function ProductManager() {
             await productService.admin.createCompany(newCompany)
             toast.success('System: Brand Profile & Products Registered')
             setShowCompanyModal(false)
-            setNewCompany({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, selling_price: 0, cashback_amount: 100 }] })
+            setNewCompany({ name: '', website: '', description: '', products: [{ name: '', mrp: 0, cashback_amount: 100 }] })
             fetchData()
         } catch (error) {
             toast.error('Failed to add company')
@@ -50,7 +50,7 @@ export default function ProductManager() {
     const addProductField = () => {
         setNewCompany({
             ...newCompany,
-            products: [...newCompany.products, { name: '', mrp: 0, selling_price: 0, cashback_amount: 100 }]
+            products: [...newCompany.products, { name: '', mrp: 0, cashback_amount: 100 }]
         })
     }
 
@@ -135,8 +135,8 @@ export default function ProductManager() {
                             <tr className="border-b border-white/5 bg-white/[0.01]">
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Inventory Identity</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Brand Source</th>
-                                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Market Value</th>
-                                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Cashback</th>
+                                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Product MSRP</th>
+                                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Cashback Reward</th>
                                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 text-right">Operations</th>
                             </tr>
                         </thead>
@@ -160,8 +160,8 @@ export default function ProductManager() {
                                         </span>
                                     </td>
                                     <td className="px-10 py-8">
-                                        <div className="font-black text-xl text-white tracking-tighter italic">₹{product.selling_price}</div>
-                                        <div className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">MSRP: ₹{product.mrp}</div>
+                                        <div className="font-black text-xl text-white tracking-tighter italic">₹{product.mrp}</div>
+                                        <div className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">Retail Value</div>
                                     </td>
                                     <td className="px-10 py-8">
                                         <div className="font-black text-xl text-emerald-500 tracking-tighter italic">₹{product.cashback_amount}</div>
@@ -197,35 +197,33 @@ export default function ProductManager() {
                 {showCompanyModal && (
                     <Modal title="Register Brand" subtitle="Add New Partner Company" onClose={() => setShowCompanyModal(false)}>
                         <form onSubmit={handleCreateCompany} className="space-y-6">
-                            {/* Visual Header */}
-                            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600/20 via-teal-600/10 to-transparent p-8 rounded-3xl border border-emerald-500/20">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
-                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl"></div>
+                            {/* Visual Header - Compressed */}
+                            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600/20 via-teal-600/10 to-transparent p-5 rounded-3xl border border-emerald-500/20">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-3xl"></div>
                                 <div className="relative flex items-center gap-4">
                                     <motion.div
-                                        initial={{ scale: 0, rotate: -180 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        transition={{ type: "spring", duration: 0.8 }}
-                                        className="p-4 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl shadow-xl shadow-emerald-600/30"
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl shadow-lg"
                                     >
-                                        <Building2 size={32} className="text-white" />
+                                        <Building2 size={24} className="text-white" />
                                     </motion.div>
                                     <div>
-                                        <div className="text-sm font-black text-white uppercase tracking-wider">Brand Authentication</div>
-                                        <div className="text-xs text-slate-400 mt-1">Register official partner profile</div>
+                                        <div className="text-xs font-black text-white uppercase tracking-widest leading-none">Brand Identity</div>
+                                        <div className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-tighter">Register official partner profile</div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Form Fields */}
-                            <div className="space-y-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <FormGroup label="Company Name" icon={<Building2 size={14} />}>
                                     <input
                                         required
                                         value={newCompany.name}
                                         onChange={e => setNewCompany({ ...newCompany, name: e.target.value })}
                                         className="premium-input"
-                                        placeholder="e.g., Purna Health Pvt Ltd"
+                                        placeholder="e.g., Purna Health"
                                     />
                                 </FormGroup>
 
@@ -238,77 +236,81 @@ export default function ProductManager() {
                                     />
                                 </FormGroup>
 
-                                <FormGroup label="Company Description" icon={<span className="text-xs">📋</span>}>
-                                    <textarea
-                                        rows={3}
-                                        value={newCompany.description}
-                                        onChange={e => setNewCompany({ ...newCompany, description: e.target.value })}
-                                        className="premium-input resize-none"
-                                        placeholder="Company mission, vision, and key details..."
-                                    />
-                                </FormGroup>
+                                <div className="md:col-span-2">
+                                    <FormGroup label="Company Description" icon={<span className="text-xs">📋</span>}>
+                                        <textarea
+                                            rows={2}
+                                            value={newCompany.description}
+                                            onChange={e => setNewCompany({ ...newCompany, description: e.target.value })}
+                                            className="premium-input resize-none"
+                                            placeholder="Write a brief brief about the brand..."
+                                        />
+                                    </FormGroup>
+                                </div>
+                            </div>
 
-                                {/* Dynamic Products Section */}
-                                <div className="space-y-4 pt-4 border-t border-white/5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                            <Package size={14} className="text-emerald-500" />
-                                            Product Listing ({newCompany.products.length})
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={addProductField}
-                                            className="p-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-500 rounded-lg transition-all border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest"
-                                        >
-                                            Add Product
-                                        </button>
+                            {/* Dynamic Products Section */}
+                            <div className="space-y-4 pt-4 border-t border-white/5">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                        <Package size={14} className="text-emerald-500" />
+                                        Product Listing ({newCompany.products.length})
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={addProductField}
+                                        className="p-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-500 rounded-lg transition-all border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        Add Product
+                                    </button>
+                                </div>
 
-                                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
-                                        {newCompany.products.map((product, index) => (
-                                            <div key={index} className="bg-white/[0.02] p-4 rounded-2xl border border-white/5 space-y-3 relative group/prod">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeProductField(index)}
-                                                    className="absolute top-4 right-4 p-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all opacity-0 group-hover/prod:opacity-100"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
+                                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
+                                    {newCompany.products.map((product, index) => (
+                                        <div key={index} className="bg-white/[0.02] p-4 rounded-2xl border border-white/5 space-y-3 relative group/prod">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeProductField(index)}
+                                                className="absolute top-4 right-4 p-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all opacity-0 group-hover/prod:opacity-100"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
 
-                                                <div className="grid grid-cols-3 gap-4">
-                                                    <FormGroup label="Name">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                <div className="sm:col-span-1">
+                                                    <FormGroup label="Product Name">
                                                         <input
                                                             required
                                                             value={product.name}
                                                             onChange={e => updateProductField(index, 'name', e.target.value)}
                                                             className="premium-input h-10 py-0"
-                                                            placeholder="Product name"
-                                                        />
-                                                    </FormGroup>
-                                                    <FormGroup label="Selling Price">
-                                                        <input
-                                                            required
-                                                            type="number"
-                                                            value={product.selling_price}
-                                                            onChange={e => updateProductField(index, 'selling_price', e.target.value)}
-                                                            className="premium-input h-10 py-0"
-                                                            placeholder="₹"
-                                                        />
-                                                    </FormGroup>
-                                                    <FormGroup label="Cashback">
-                                                        <input
-                                                            required
-                                                            type="number"
-                                                            value={product.cashback_amount}
-                                                            onChange={e => updateProductField(index, 'cashback_amount', e.target.value)}
-                                                            className="premium-input h-10 py-0 border-emerald-500/20 text-emerald-500"
-                                                            placeholder="₹"
+                                                            placeholder="e.g., Apple Gummies"
                                                         />
                                                     </FormGroup>
                                                 </div>
+                                                <FormGroup label="MRP (₹)">
+                                                    <input
+                                                        required
+                                                        type="number"
+                                                        value={product.mrp}
+                                                        onChange={e => updateProductField(index, 'mrp', e.target.value)}
+                                                        className="premium-input h-10 py-0"
+                                                        placeholder="0.00"
+                                                    />
+                                                </FormGroup>
+                                                <FormGroup label="Cashback (₹)">
+                                                    <input
+                                                        required
+                                                        type="number"
+                                                        value={product.cashback_amount}
+                                                        onChange={e => updateProductField(index, 'cashback_amount', e.target.value)}
+                                                        className="premium-input h-10 py-0 border-emerald-500/20 text-emerald-400 font-bold"
+                                                        placeholder="0.00"
+                                                    />
+                                                </FormGroup>
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
@@ -357,7 +359,7 @@ export default function ProductManager() {
                     border-color: rgba(148, 163, 184, 0.2);
                 }
             `}} />
-        </div>
+        </div >
     )
 }
 
@@ -369,7 +371,7 @@ function Modal({ title, subtitle, children, onClose }) {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-3xl bg-[#0a0f1d] rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl"
+                className="relative w-full max-w-2xl bg-[#0a0f1d] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl"
             >
                 <div className="flex items-center justify-between px-10 py-8 border-b border-white/5 bg-gradient-to-r from-white/[0.02] to-transparent">
                     <div>
@@ -378,7 +380,7 @@ function Modal({ title, subtitle, children, onClose }) {
                     </div>
                     <button onClick={onClose} className="p-2.5 hover:bg-white/5 rounded-2xl transition text-slate-600 hover:text-white"><X size={24} /></button>
                 </div>
-                <div className="p-10 overflow-y-auto max-h-[75vh] scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">{children}</div>
+                <div className="p-6 lg:p-8 overflow-y-auto max-h-[75vh] scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">{children}</div>
             </motion.div>
         </div>
     )

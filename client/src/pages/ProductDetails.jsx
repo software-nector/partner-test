@@ -111,14 +111,16 @@ export default function ProductDetails() {
                     </header>
 
                     {/* Pricing Block */}
-                    <div className="flex items-end gap-10">
+                    <div className="flex items-end gap-6">
                         <div>
-                            <div className="text-[10px] font-black text-slate-600 tracking-widest uppercase mb-2">Member Price</div>
-                            <div className="text-6xl font-black text-white tracking-tighter italic">₹{product.selling_price}</div>
+                            <div className="text-[10px] font-black text-slate-600 tracking-widest uppercase mb-2">Retail Price (MRP)</div>
+                            <div className="text-6xl font-black text-white tracking-tighter italic">₹{product.mrp}</div>
                         </div>
                         <div className="pb-2">
-                            <div className="text-lg text-slate-700 line-through font-bold decoration-2">₹{product.mrp}</div>
-                            <div className="text-xs font-black text-emerald-500 uppercase tracking-widest mt-1 italic">Save {Math.round(((product.mrp - product.selling_price) / product.mrp) * 100)}% Today</div>
+                            <div className="text-xs font-black text-emerald-500 uppercase tracking-widest mt-1 italic flex items-center gap-2">
+                                <CheckCircle2 size={12} />
+                                Guaranteed Reward
+                            </div>
                         </div>
                     </div>
 
