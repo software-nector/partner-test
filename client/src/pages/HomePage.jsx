@@ -146,7 +146,7 @@ export default function HomePage() {
             const initGoogleButton = () => {
                 try {
                     window.google.accounts.id.initialize({
-                        client_id: '1002481870605-ik6ef0o6flqocv3g0ksu1v8dmh70eme8.apps.googleusercontent.com',
+                        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                         callback: async (response) => {
                             try {
                                 const res = await api.post('/auth/google/login', { token: response.credential })
@@ -803,7 +803,7 @@ export default function HomePage() {
                                             __html: `
                                                 if (window.google) {
                                                     window.google.accounts.id.initialize({
-                                                        client_id: '1059677553476-8hhqvl1kcuqrqjdvkl9ks0gg0o9rqk8a.apps.googleusercontent.com',
+                                                         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                                                         callback: (response) => {
                                                             window.handleGoogleResponse(response);
                                                         }
@@ -887,38 +887,6 @@ export default function HomePage() {
                                 </>
                             )}
 
-                            {loginMethod === 'whatsapp' && (
-                                <form onSubmit={handleLoginSubmit} className="space-y-5">
-                                    <div>
-                                        <label className="block text-sm font-bold mb-3 text-white">Phone Number</label>
-                                        <input
-                                            required
-                                            type="tel"
-                                            value={loginForm.phone}
-                                            onChange={(e) => setLoginForm({ ...loginForm, phone: e.target.value })}
-                                            placeholder="9876543210"
-                                            className="w-full bg-[#2a2a2a] border border-gray-700 rounded-2xl px-5 py-4 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none text-white placeholder-gray-500 transition-all"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold mb-3 text-white">Coupon Code</label>
-                                        <input
-                                            required
-                                            type="text"
-                                            value={loginForm.coupon}
-                                            onChange={(e) => setLoginForm({ ...loginForm, coupon: e.target.value })}
-                                            placeholder="Enter code from product"
-                                            className="w-full bg-[#2a2a2a] border border-gray-700 rounded-2xl px-5 py-4 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none text-white placeholder-gray-500 transition-all"
-                                        />
-                                    </div>
-                                    <button
-                                        disabled={formLoading}
-                                        className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-4 rounded-2xl font-bold text-lg disabled:opacity-50 transition-all shadow-lg shadow-green-600/20"
-                                    >
-                                        {formLoading ? 'Sending OTP...' : 'Send OTP'}
-                                    </button>
-                                </form>
-                            )}
 
                             <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3">
                                 <Lock className="text-amber-400 mt-1 flex-shrink-0" size={20} />
