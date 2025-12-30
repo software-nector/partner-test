@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -14,6 +14,7 @@ import api from '../services/api'
 
 export default function HomePage() {
     const navigate = useNavigate()
+    const location = useLocation()
     const { user, isAuthenticated, login, logout } = useAuth()
 
     // View Management
@@ -35,15 +36,30 @@ export default function HomePage() {
     const [cashbackForm, setCashbackForm] = useState({ platform: '', upiId: '', couponCode: '', screenshot: null })
     const [videoForm, setVideoForm] = useState({ reelUrl: '', instagramUsername: '', address: '', screenshot: null })
 
-    // URL Parameter handling
+    // URL Parameter & Navigation State handling
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         const code = params.get('code')
-        if (code) {
-            setLoginForm(prev => ({ ...prev, coupon: code }))
-            setCashbackForm(prev => ({ ...prev, couponCode: code }))
+        const stateCode = location.state?.qrCode
+        const claimMode = params.get('claim') === 'true'
+        const autoOpen = location.state?.autoOpenReward || claimMode
+
+        if (code || stateCode) {
+            const finalCode = (code || stateCode).toUpperCase()
+            setLoginForm(prev => ({ ...prev, coupon: finalCode }))
+            setCashbackForm(prev => ({ ...prev, couponCode: finalCode }))
+
+            if (autoOpen) {
+                setActiveSection('claims')
+            }
         }
-    }, [])
+    }, [location.search, location.state])
+
+    const getDetectedProduct = () => {
+        if (!cashbackForm.couponCode) return null
+        const prefix = cashbackForm.couponCode.split('-')[0].toUpperCase()
+        return products.find(p => p.sku_prefix?.toUpperCase() === prefix)
+    }
 
     useEffect(() => {
         const init = async () => {
@@ -249,25 +265,25 @@ export default function HomePage() {
         return (
             <div className="min-h-screen bg-[#0f1729] text-white">
                 {/* Header */}
-                <header className="bg-[#1a2332] border-b border-gray-800 px-6 py-4">
+                <header className="bg-[#1a2332] border-b border-gray-800 px-4 md:px-6 py-4">
                     <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="text-4xl">🍬</div>
-                            <span className="text-xl font-bold text-cyan-400">Purna Gummies</span>
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <div className="text-2xl md:text-4xl">🍬</div>
+                            <span className="text-lg md:text-xl font-bold text-cyan-400">Purna Gummies</span>
                         </div>
                         <button
                             onClick={logout}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2"
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 rounded-lg text-sm md:text-base font-semibold flex items-center gap-2"
                         >
-                            <LogOut size={18} /> Logout
+                            <LogOut size={16} className="md:w-[18px]" /> <span className="hidden xs:inline">Logout</span>
                         </button>
                     </div>
                 </header>
 
-                {/* Navigation Tabs */}
-                <div className="bg-[#1a2332] border-b border-gray-800">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="flex gap-8">
+                {/* Navigation Tabs - Mobile Friendly Scroll */}
+                <div className="bg-[#1a2332] border-b border-gray-800 overflow-x-auto scrollbar-hide">
+                    <div className="max-w-7xl mx-auto px-4 md:px-6">
+                        <div className="flex gap-4 md:gap-8 min-w-max">
                             {[
                                 { id: 'overview', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
                                 { id: 'claims', label: 'Claim Reward', icon: <Award size={18} /> },
@@ -276,13 +292,13 @@ export default function HomePage() {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveSection(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-4 border-b-2 transition-colors ${activeSection === tab.id
+                                    className={`flex items-center gap-2 px-2 md:px-4 py-4 border-b-2 transition-colors text-sm md:text-base ${activeSection === tab.id
                                         ? 'border-cyan-400 text-cyan-400'
                                         : 'border-transparent text-gray-400 hover:text-white'
                                         }`}
                                 >
                                     {tab.icon}
-                                    <span className="font-semibold">{tab.label}</span>
+                                    <span className="font-semibold whitespace-nowrap">{tab.label}</span>
                                 </button>
                             ))}
                         </div>
@@ -300,7 +316,7 @@ export default function HomePage() {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="space-y-8"
                             >
-                                <h2 className="text-3xl font-bold text-cyan-400">Welcome, {user?.name}!</h2>
+                                <h2 className="text-2xl md:text-3xl font-bold text-cyan-400">Welcome, {user?.name}!</h2>
 
                                 {/* Stats Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -432,10 +448,10 @@ export default function HomePage() {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="max-w-2xl mx-auto"
                             >
-                                <div className="bg-[#1a2332] rounded-2xl p-8 border border-gray-800">
-                                    <h2 className="text-2xl font-bold mb-6 text-cyan-400">Claim Your Reward</h2>
+                                <div className="bg-[#1a2332] rounded-2xl p-5 md:p-8 border border-gray-800">
+                                    <h2 className="text-xl md:text-2xl font-bold mb-6 text-cyan-400">Claim Your Reward</h2>
                                     <form onSubmit={handleCashbackSubmit} className="space-y-6">
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-semibold mb-2">Platform</label>
                                                 <select
@@ -447,6 +463,10 @@ export default function HomePage() {
                                                     <option value="">Select Platform</option>
                                                     <option value="Amazon">Amazon</option>
                                                     <option value="Flipkart">Flipkart</option>
+                                                    <option value="Meesho">Meesho</option>
+                                                    <option value="Myntra">Myntra</option>
+                                                    <option value="Nykaa">Nykaa</option>
+                                                    <option value="JioMart">JioMart</option>
                                                     <option value="Other">Other</option>
                                                 </select>
                                             </div>
@@ -463,13 +483,20 @@ export default function HomePage() {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold mb-2">Coupon Code</label>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="block text-sm font-semibold">Coupon Code</label>
+                                                {getDetectedProduct() && (
+                                                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-wider">
+                                                        Product: {getDetectedProduct().name}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <input
                                                 required
                                                 type="text"
                                                 readOnly={!!new URLSearchParams(window.location.search).get('code')}
                                                 value={cashbackForm.couponCode}
-                                                onChange={(e) => setCashbackForm({ ...cashbackForm, couponCode: e.target.value })}
+                                                onChange={(e) => setCashbackForm({ ...cashbackForm, couponCode: e.target.value.toUpperCase() })}
                                                 placeholder="Enter code from product"
                                                 className={`w-full bg-[#0f1729] border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-400 outline-none ${new URLSearchParams(window.location.search).get('code') ? 'opacity-70 cursor-not-allowed' : ''}`}
                                             />
@@ -503,10 +530,10 @@ export default function HomePage() {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="max-w-2xl mx-auto"
                             >
-                                <div className="bg-[#1a2332] rounded-2xl p-8 border border-gray-800">
-                                    <h2 className="text-2xl font-bold mb-6 text-cyan-400">Submit Your Reel</h2>
+                                <div className="bg-[#1a2332] rounded-2xl p-5 md:p-8 border border-gray-800">
+                                    <h2 className="text-xl md:text-2xl font-bold mb-6 text-cyan-400">Submit Your Reel</h2>
                                     <form onSubmit={handleVideoSubmit} className="space-y-6">
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-semibold mb-2">Reel URL</label>
                                                 <input
@@ -573,35 +600,35 @@ export default function HomePage() {
             {/* Header */}
             <header className="bg-[#1a2332] border-b border-gray-800 px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="text-4xl">🍬</div>
-                        <span className="text-xl font-bold text-cyan-400">Purna Gummies</span>
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <div className="text-3xl md:text-4xl">🍬</div>
+                        <span className="text-lg md:text-xl font-bold text-cyan-400">Purna Gummies</span>
                     </div>
                     <button
                         onClick={() => setShowLoginModal(true)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 rounded-lg text-sm md:text-base font-semibold flex items-center gap-2"
                     >
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                         </svg>
-                        Login with WhatsApp
+                        <span className="hidden xs:inline">WhatsApp</span> Login
                     </button>
                 </div>
             </header>
 
             {/* Hero Section */}
-            <main className="max-w-7xl mx-auto px-6 py-16">
-                <div className="text-center mb-16">
-                    <h1 className="text-5xl md:text-6xl font-bold mb-4">
+            <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
+                <div className="text-center mb-10 md:mb-16">
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
                         Welcome to <span className="text-cyan-400">Purna Gummies Rewards!</span> 🎁
                     </h1>
-                    <p className="text-xl text-gray-400">Watch expert doctor's advice and leave your valuable review</p>
+                    <p className="text-base md:text-xl text-gray-400">Watch expert doctor's advice and leave your valuable review</p>
                 </div>
 
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
                     {/* Video Section */}
-                    <div className="bg-[#1a2332] rounded-3xl p-8 border border-gray-800">
+                    <div className="bg-[#1a2332] rounded-3xl p-5 md:p-8 border border-gray-800">
                         <div className="aspect-video bg-gray-900 rounded-2xl mb-6 overflow-hidden">
                             {videoData?.video_url ? (
                                 <video className="w-full h-full object-cover" controls>
@@ -613,24 +640,24 @@ export default function HomePage() {
                                 </div>
                             )}
                         </div>
-                        <h3 className="text-2xl font-bold mb-4">Expert Doctor's Advice on Purna Gummies</h3>
-                        <p className="text-gray-400 mb-6">Watch this informative video about the benefits of Purna Gummies and how they can improve your health.</p>
+                        <h3 className="text-xl md:text-2xl font-bold mb-4">Expert Doctor's Advice</h3>
+                        <p className="text-sm md:text-base text-gray-400 mb-6">Watch this informative video about the benefits of Purna Gummies and how they can improve your health.</p>
                         <button
                             onClick={() => setShowLoginModal(true)}
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2"
                         >
-                            <Star size={20} fill="currentColor" /> Give Review
+                            <Star size={18} fill="currentColor" /> Give Review
                         </button>
                     </div>
 
                     {/* Claim Reward Section */}
-                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-8 border border-gray-700 flex flex-col items-center justify-center text-center">
-                        <div className="text-7xl mb-6">💰</div>
-                        <h3 className="text-3xl font-bold mb-4">Claim Reward</h3>
-                        <p className="text-gray-300 mb-8 text-lg">Upload your review screenshot and get instant UPI cashback</p>
+                    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-8 border border-gray-700 flex flex-col items-center justify-center text-center min-h-[300px]">
+                        <div className="text-5xl md:text-7xl mb-6">💰</div>
+                        <h3 className="text-2xl md:text-3xl font-bold mb-4">Claim Reward</h3>
+                        <p className="text-gray-300 mb-8 text-base md:text-lg">Upload your review screenshot and get instant UPI cashback</p>
                         <button
                             onClick={() => setShowLoginModal(true)}
-                            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-12 py-4 rounded-xl font-bold text-lg flex items-center gap-2"
+                            className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-8 md:px-12 py-4 rounded-xl font-bold text-base md:text-lg flex items-center justify-center gap-2"
                         >
                             Claim Now →
                         </button>

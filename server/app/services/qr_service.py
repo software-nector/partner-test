@@ -39,8 +39,8 @@ class QRCodeService:
             border=4,
         )
         
-        # Add data (product page URL)
-        url = f"{self.base_url}/p/{code}"
+        # Add data (Direct Claim URL on Homepage)
+        url = f"{self.base_url}/?code={code}&claim=true"
         qr.add_data(url)
         qr.make(fit=True)
         

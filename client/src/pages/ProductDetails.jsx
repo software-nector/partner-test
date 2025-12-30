@@ -154,7 +154,7 @@ export default function ProductDetails() {
                         <motion.button
                             whileHover={{ scale: 1.02, y: -2 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => navigate('/', { state: { productName: product.name, qrCode: qrCode, autoOpenReward: true } })}
+                            onClick={() => navigate(`/?code=${qrCode}&claim=true`)}
                             className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-2xl shadow-2xl shadow-blue-500/30 transition-all flex items-center justify-center gap-4 group"
                         >
                             Claim Your Reward
