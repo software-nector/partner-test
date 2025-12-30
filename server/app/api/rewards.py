@@ -124,6 +124,22 @@ async def submit_reward(
         # On error, keep as pending for manual review
 
     # Create reward record
+    # 4. Upload to Google Drive (if local save and AI check passed)
+    drive_link = f"/{file_path}" # Fallback to local
+    try:
+        from app.services.google_drive_service import google_drive_service
+        drive_filename = f"{name.replace(' ', '_')}_{coupon_code.upper()}.jpg"
+        print(f"☁️ Uploading to Google Drive: {drive_filename}")
+        uploaded_link = google_drive_service.upload_file(file_path, drive_filename)
+        if uploaded_link:
+            drive_link = uploaded_link
+            # IMPORTANT: Delete local file after successful drive upload
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"🗑️ Local file deleted: {file_path}")
+    except Exception as drive_err:
+        print(f"⚠️ Google Drive upload failed, keeping local: {str(drive_err)}")
+
     reward = Reward(
         user_id=current_user.id,
         name=name,
@@ -132,7 +148,7 @@ async def submit_reward(
         address="N/A",
         product_name=product.name,
         purchase_date=datetime.now(),
-        review_screenshot=f"/{file_path}",
+        review_screenshot=drive_link,
         platform_name=platform,
         coupon_code=coupon_code.upper(),
         upi_id=upi_id,

@@ -47,6 +47,21 @@ async def submit_reel(
         shutil.copyfileobj(screenshot.file, buffer)
     
     # Create reel record
+    # 3. Upload to Google Drive (if local save passed)
+    drive_link = file_path # Fallback to local
+    try:
+        from app.services.google_drive_service import google_drive_service
+        drive_filename = f"REEL_{instagram_username.replace('@', '')}_{timestamp}.jpg"
+        print(f"☁️ Uploading Reel Proof to Google Drive: {drive_filename}")
+        uploaded_link = google_drive_service.upload_file(file_path, drive_filename)
+        if uploaded_link:
+            drive_link = uploaded_link
+            # Clean up local file
+            if os.path.exists(file_path):
+                os.remove(file_path)
+    except Exception as drive_err:
+        print(f"⚠️ Google Drive upload failed for reel, keeping local: {str(drive_err)}")
+
     reel = Reel(
         user_id=current_user.id,
         name=name,
@@ -55,7 +70,7 @@ async def submit_reel(
         address=address,
         instagram_handle=instagram_username,
         reel_url=reel_url,
-        brand_tag_proof=file_path,
+        brand_tag_proof=drive_link,
         product_name=product_name,
         status="pending"
     )

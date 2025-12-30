@@ -154,10 +154,18 @@ export default function ReelsList() {
                                         @{reel.social_username}
                                     </div>
                                 </div>
-                                {/* Placeholder / Poster feel */}
-                                <div className="w-full h-full bg-gradient-to-br from-purple-900/40 to-slate-900 flex items-center justify-center text-slate-700">
-                                    <Film size={48} />
-                                </div>
+                                {/* Proof Image Preview instead of Icon */}
+                                {reel.brand_tag_proof ? (
+                                    <img
+                                        src={reel.brand_tag_proof.startsWith('http') ? reel.brand_tag_proof : `http://194.238.18.10:8001/${reel.brand_tag_proof}`}
+                                        className="w-full h-full object-cover group-hover/preview:scale-110 transition-transform duration-500"
+                                        onError={(e) => e.target.style.display = 'none'}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-purple-900/40 to-slate-900 flex items-center justify-center text-slate-700">
+                                        <Film size={48} />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Creator Content Section */}
@@ -221,9 +229,9 @@ export default function ReelsList() {
                                         </div>
                                     )}
 
-                                    {reel.brand_tag_proof_url && (
+                                    {reel.brand_tag_proof && (
                                         <button
-                                            onClick={() => { setSelectedImage(reel.brand_tag_proof_url); setShowImageModal(true) }}
+                                            onClick={() => { setSelectedImage(reel.brand_tag_proof); setShowImageModal(true) }}
                                             className="p-4 bg-white/5 border border-white/5 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl"
                                         >
                                             <Eye size={18} />
@@ -296,10 +304,10 @@ export default function ReelsList() {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl transition-all" onClick={() => setShowImageModal(false)}>
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative max-w-5xl w-full h-full flex flex-col justify-center items-center gap-10" onClick={e => e.stopPropagation()}>
                             <div className="relative group">
-                                <img src={`http://194.238.18.10:8001${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[3rem] shadow-[0_0_100px_rgba(147,51,234,0.15)] border border-white/10" />
+                                <img src={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001/${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[3rem] shadow-[0_0_100px_rgba(147,51,234,0.15)] border border-white/10" />
                                 <div className="absolute top-8 right-8 flex gap-4">
-                                    <a href={`http://194.238.18.10:8001${selectedImage}`} download className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><Download size={20} /></a>
-                                    <a href={`http://194.238.18.10:8001${selectedImage}`} target="_blank" className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><ExternalLink size={20} /></a>
+                                    <a href={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001/${selectedImage}`} download className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><Download size={20} /></a>
+                                    <a href={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001/${selectedImage}`} target="_blank" className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><ExternalLink size={20} /></a>
                                 </div>
                             </div>
                             <button onClick={() => setShowImageModal(false)} className="px-12 py-5 bg-purple-600 text-white rounded-3xl font-black text-xs uppercase shadow-2xl shadow-purple-600/30">Close Proof Viewer</button>
