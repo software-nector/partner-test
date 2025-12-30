@@ -80,16 +80,16 @@ export default function ProductDetails() {
                     </motion.div>
 
                     <div className="grid grid-cols-2 gap-6">
-                        {[
-                            { icon: <ShieldCheck size={18} />, label: 'CLINICALLY TESTED', val: 'PRO GRADE' },
-                            { icon: <Zap size={18} />, label: 'CASHBACK ELIGIBLE', val: `UP TO ₹${product.cashback_amount}` }
-                        ].map((s, i) => (
-                            <div key={i} className="bg-white/5 border border-white/5 p-8 rounded-[2rem] space-y-2">
-                                <div className="text-blue-500 bg-blue-500/10 w-10 h-10 rounded-xl flex items-center justify-center mb-4">{s.icon}</div>
-                                <div className="text-[10px] font-black text-slate-500 tracking-widest uppercase">{s.label}</div>
-                                <div className="text-xl font-bold text-white tracking-tight">{s.val}</div>
-                            </div>
-                        ))}
+                        <div className="bg-white/5 border border-white/5 p-8 rounded-[2rem] space-y-2">
+                            <div className="text-blue-500 bg-blue-500/10 w-10 h-10 rounded-xl flex items-center justify-center mb-4"><ShieldCheck size={18} /></div>
+                            <div className="text-[10px] font-black text-slate-500 tracking-widest uppercase">CLINICALLY TESTED</div>
+                            <div className="text-xl font-bold text-white tracking-tight">PRO GRADE</div>
+                        </div>
+                        <div className="bg-white/5 border border-white/5 p-8 rounded-[2rem] space-y-2">
+                            <div className="text-blue-500 bg-blue-500/10 w-10 h-10 rounded-xl flex items-center justify-center mb-4"><Zap size={18} /></div>
+                            <div className="text-[10px] font-black text-slate-500 tracking-widest uppercase">EXCLUSIVE OFFER</div>
+                            <div className="text-xl font-bold text-white tracking-tight">GUARANTEED</div>
+                        </div>
                     </div>
                 </div>
 
@@ -113,13 +113,13 @@ export default function ProductDetails() {
                     {/* Reward Block */}
                     <div className="flex items-end gap-6">
                         <div>
-                            <div className="text-[10px] font-black text-slate-600 tracking-widest uppercase mb-2">Guaranteed Reward</div>
-                            <div className="text-6xl font-black text-emerald-400 tracking-tighter italic">₹{product.cashback_amount}</div>
+                            <div className="text-[10px] font-black text-slate-600 tracking-widest uppercase mb-2">Exclusive Offer</div>
+                            <div className="text-4xl font-black text-emerald-400 tracking-tighter italic uppercase">Guaranteed Reward</div>
                         </div>
                         <div className="pb-2">
                             <div className="text-xs font-black text-slate-500 uppercase tracking-widest mt-1 italic flex items-center gap-2">
                                 <CheckCircle2 size={12} className="text-emerald-500" />
-                                Instant Cashback
+                                Instant Claim
                             </div>
                         </div>
                     </div>
@@ -157,7 +157,7 @@ export default function ProductDetails() {
                             onClick={() => navigate('/', { state: { productName: product.name, qrCode: qrCode, autoOpenReward: true } })}
                             className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-2xl shadow-2xl shadow-blue-500/30 transition-all flex items-center justify-center gap-4 group"
                         >
-                            Claim ₹{product.cashback_amount} Cashback
+                            Claim Your Reward
                             <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
                         </motion.button>
 

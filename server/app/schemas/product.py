@@ -6,13 +6,12 @@ class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
     image_url: Optional[str] = None
-    mrp: float
-    selling_price: float
     cashback_amount: float = 100.0
     amazon_url: Optional[str] = None
     flipkart_url: Optional[str] = None
     website_url: Optional[str] = None
     category: Optional[str] = None
+    sku_prefix: Optional[str] = None
     is_active: bool = True
 
 class ProductCreate(ProductBase):
@@ -20,8 +19,6 @@ class ProductCreate(ProductBase):
 
 class ProductUpdate(ProductBase):
     name: Optional[str] = None
-    mrp: Optional[float] = None
-    selling_price: Optional[float] = None
     cashback_amount: Optional[float] = None
     company_id: Optional[int] = None
 
@@ -37,6 +34,8 @@ class ProductResponse(ProductBase):
 class QRCodeResponse(BaseModel):
     code: str
     product_id: int
+    batch_id: Optional[int] = None
+    serial_number: Optional[int] = None
     scan_count: int
     is_used: bool
     created_at: datetime

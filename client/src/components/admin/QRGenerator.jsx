@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { productService } from '../../services/productService'
+import { API_URL } from '../../services/api'
 import {
     QrCode, Plus, Copy, ExternalLink, BarChart3,
     Clock, Link2, Target, Zap, Activity,
@@ -14,10 +15,12 @@ export default function QRGenerator() {
     const [products, setProducts] = useState([])
     const [selectedProduct, setSelectedProduct] = useState('')
     const [qrCodes, setQrCodes] = useState([])
+    const [batches, setBatches] = useState([])
     const [loading, setLoading] = useState(true)
-    const [quantity, setQuantity] = useState(24)
+    const [quantity, setQuantity] = useState(100)
     const [generating, setGenerating] = useState(false)
     const [filter, setFilter] = useState('all') // 'all', 'used', 'unused'
+    const [view, setView] = useState('log') // 'log' or 'batches'
 
     useEffect(() => {
         fetchInitialData()
@@ -47,37 +50,44 @@ export default function QRGenerator() {
             const response = await productService.admin.listProducts()
             const filteredProducts = response.data.filter(p => p.company_id === parseInt(companyId))
             setProducts(filteredProducts)
+
+            // NEW: Fetch all batches for this company/brand initially
+            fetchBatches(null, companyId)
         } catch (error) {
             toast.error('Failed to load products')
         }
     }
 
-    const handleGenerate = async () => {
+    const handleInstantDownload = async () => {
         if (!selectedProduct) return toast.error('Select a product first')
-        if (quantity < 1 || quantity > 100) return toast.error('Quantity must be between 1 and 100')
+        if (quantity < 1 || quantity > 500) return toast.error('Quantity must be between 1 and 500')
 
         setGenerating(true)
+        const loadToast = toast.loading(`Generating ${quantity} QR Codes...`)
+
         try {
-            const response = await productService.admin.generateBulkQR(selectedProduct, quantity)
-            toast.success(`Generated ${quantity} QR codes successfully!`)
-            fetchQRs(selectedProduct)
+            const response = await productService.admin.generateBatchPDF(selectedProduct, quantity)
+
+            // Handle Blob Download locally (Fixes Mixed Content & Storage issues)
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            link.href = url
+            const pName = products.find(p => p.id === parseInt(selectedProduct))?.name || 'Product'
+            link.setAttribute('download', `QR_${quantity}_${pName.replace(/\s+/g, '_')}.pdf`)
+            document.body.appendChild(link)
+            link.click()
+
+            // Cleanup
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+
+            toast.success('Batch Generated & Downloaded', { id: loadToast })
+            fetchQRs(selectedProduct) // Refresh log
+            fetchBatches(selectedProduct) // Refresh batches
         } catch (error) {
-            toast.error('Generation failed')
+            toast.error('Generation Failed', { id: loadToast })
         } finally {
             setGenerating(false)
-        }
-    }
-
-    const handleDownloadPDF = async () => {
-        if (!selectedProduct) return toast.error('Select a product first')
-        if (qrCodes.length === 0) return toast.error('No QR codes to download')
-
-        try {
-            const url = `http://194.238.18.10:8001/api/admin/catalog/products/${selectedProduct}/qr-pdf`
-            window.open(url, '_blank')
-            toast.success('PDF download started!')
-        } catch (error) {
-            toast.error('PDF download failed')
         }
     }
 
@@ -87,6 +97,22 @@ export default function QRGenerator() {
             setQrCodes(response.data)
         } catch (error) {
             toast.error('Failed to resolve QR codes')
+        }
+    }
+
+    const fetchBatches = async (productId, companyId = null) => {
+        try {
+            let response;
+            if (productId) {
+                response = await productService.admin.getBatchHistory(productId)
+            } else if (companyId || selectedCompany) {
+                response = await productService.admin.getCompanyBatchHistory(companyId || selectedCompany)
+            } else {
+                return;
+            }
+            setBatches(response.data)
+        } catch (error) {
+            console.error('Failed to load batches')
         }
     }
 
@@ -153,7 +179,10 @@ export default function QRGenerator() {
                                 value={selectedProduct}
                                 onChange={(e) => {
                                     setSelectedProduct(e.target.value)
-                                    if (e.target.value) fetchQRs(e.target.value)
+                                    if (e.target.value) {
+                                        fetchQRs(e.target.value)
+                                        fetchBatches(e.target.value)
+                                    }
                                 }}
                                 className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-5 text-white text-xs font-bold focus:border-blue-500 transition-all appearance-none outline-none shadow-inner disabled:opacity-30"
                             >
@@ -179,23 +208,16 @@ export default function QRGenerator() {
                         </div>
 
                         <button
-                            onClick={handleGenerate}
+                            onClick={handleInstantDownload}
                             disabled={!selectedProduct || generating}
-                            className="w-full py-5 bg-blue-600 hover:bg-blue-500 disabled:opacity-20 text-white rounded-[1.5rem] font-black text-xs uppercase transition-all shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3 group"
+                            className="w-full py-6 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl shadow-blue-600/20 flex items-center justify-center gap-3 group"
                         >
-                            <Plus size={16} className="group-hover:rotate-90 transition-transform" />
-                            {generating ? 'Generating...' : `Generate ${quantity} Codes`}
-                        </button>
-
-                        <button
-                            onClick={handleDownloadPDF}
-                            disabled={!selectedProduct || qrCodes.length === 0}
-                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white rounded-[1.5rem] font-black text-[10px] uppercase transition-all shadow-xl shadow-emerald-600/20 flex items-center justify-center gap-2"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Download PDF (4×6 Grid)
+                            {generating ? (
+                                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                                <Zap size={18} className="group-hover:scale-110 transition-transform" />
+                            )}
+                            {generating ? 'Compiling PDF...' : 'One-Click Batch Download'}
                         </button>
                     </div>
 
@@ -222,76 +244,127 @@ export default function QRGenerator() {
                 <div className="lg:col-span-8">
                     {/* Usage Filters */}
                     {selectedProduct && qrCodes.length > 0 && (
-                        <div className="flex items-center gap-4 mb-6 p-2 bg-white/5 border border-white/5 rounded-2xl w-fit">
-                            {['all', 'unused', 'used'].map(f => (
+                        <div className="flex items-center justify-between mb-8 p-1 bg-white/5 border border-white/5 rounded-2xl">
+                            <div className="flex gap-1">
                                 <button
-                                    key={f}
-                                    onClick={() => setFilter(f)}
-                                    className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'
-                                        }`}
+                                    onClick={() => setView('log')}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'log' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                                 >
-                                    {f}
+                                    Real-Time Log
                                 </button>
-                            ))}
+                                <button
+                                    onClick={() => setView('batches')}
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'batches' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                >
+                                    Batch Manifest
+                                </button>
+                            </div>
+
+                            {view === 'log' && (
+                                <div className="flex gap-2 mr-2">
+                                    {['all', 'unused', 'used'].map(f => (
+                                        <button
+                                            key={f}
+                                            onClick={() => setFilter(f)}
+                                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-white/10 text-white' : 'text-slate-600 hover:text-white'}`}
+                                        >
+                                            {f}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
                     <div className="space-y-4">
-                        <AnimatePresence mode="popLayout text-xs uppercase font-black">
-                            {qrCodes.filter(qr => {
-                                if (filter === 'used') return qr.is_used
-                                if (filter === 'unused') return !qr.is_used
-                                return true
-                            }).map((qr, idx) => (
-                                <motion.div
-                                    layout
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: idx * 0.05 }}
-                                    key={qr.code}
-                                    className="bg-[#0b1022] p-6 rounded-[2rem] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-blue-500/20 transition-all group shadow-xl"
-                                >
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 text-slate-400 group-hover:bg-blue-600/10 group-hover:text-blue-500 transition-all">
-                                            <QrCode size={24} />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="font-mono text-white font-black text-lg tracking-[0.2em] italic uppercase">{qr.code}</div>
-                                                <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider ${qr.is_used ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'
-                                                    }`}>
-                                                    {qr.is_used ? 'Used' : 'Unused'}
+                        <AnimatePresence mode="popLayout">
+                            {view === 'log' ? (
+                                qrCodes.filter(qr => {
+                                    if (filter === 'used') return qr.is_used
+                                    if (filter === 'unused') return !qr.is_used
+                                    return true
+                                }).map((qr, idx) => (
+                                    <motion.div
+                                        layout
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        key={qr.code}
+                                        className="bg-[#0b1022] p-6 rounded-[2rem] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-blue-500/20 transition-all group shadow-xl"
+                                    >
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 text-slate-400 group-hover:bg-blue-600/10 group-hover:text-blue-500 transition-all">
+                                                <QrCode size={24} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="font-mono text-white font-black text-lg tracking-[0.2em] italic uppercase">
+                                                        {qr.code.includes('-') ? qr.code.split('-').slice(0, 2).join('-') : qr.code}
+                                                    </div>
+                                                    <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider ${qr.is_used ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                                        {qr.is_used ? 'Used' : 'Unused'}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.2em] mt-2">
+                                                    <span className="text-slate-600 flex items-center gap-1.5"><Clock size={12} /> {new Date(qr.created_at).toLocaleDateString()}</span>
+                                                    <span className="text-emerald-500 flex items-center gap-1.5"><Activity size={12} /> {qr.scan_count} Scans</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.2em] mt-2">
-                                                <span className="text-slate-600 flex items-center gap-1.5"><Clock size={12} /> {new Date(qr.created_at).toLocaleDateString()}</span>
-                                                <span className="text-emerald-500 flex items-center gap-1.5"><Activity size={12} /> {qr.scan_count} Scans</span>
+                                            <img
+                                                src={`${API_URL}/api/admin/catalog/products/${selectedProduct}/qr-image/${qr.code}`}
+                                                alt={`QR ${qr.code}`}
+                                                className="w-16 h-16 rounded-xl border border-white/10 bg-white p-1"
+                                            />
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => copyToClipboard(qr.code)}
+                                                className="px-6 py-3.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/5 flex items-center justify-center gap-2 group/btn"
+                                            >
+                                                <Copy size={14} className="group-hover/btn:scale-110 transition-transform" /> Copy Pointer
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))
+                            ) : (
+                                batches.map((batch, idx) => (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                        key={batch.id}
+                                        className="bg-[#0b1022] p-8 rounded-[2rem] border border-white/5 flex items-center justify-between group hover:border-emerald-500/20 transition-all shadow-xl"
+                                    >
+                                        <div className="flex items-center gap-8">
+                                            <div className="w-16 h-16 rounded-2xl bg-emerald-500/5 flex flex-col items-center justify-center border border-emerald-500/10 text-emerald-500">
+                                                <div className="text-[10px] font-black uppercase leading-tight">Batch</div>
+                                                <div className="text-2xl font-black italic">#{batch.batch_number}</div>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500/60 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">
+                                                        {batch.product_name}
+                                                    </span>
+                                                </div>
+                                                <div className="text-white font-black text-xl tracking-tighter">
+                                                    {batch.quantity} Printed Labels
+                                                </div>
+                                                <div className="flex items-center gap-4 mt-2">
+                                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                                        <Target size={12} /> Range: {batch.serial_start} - {batch.serial_end}
+                                                    </div>
+                                                    <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                                        <Clock size={12} /> {new Date(batch.created_at).toLocaleString()}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <img
-                                            src={`http://194.238.18.10:8001/api/admin/catalog/products/${selectedProduct}/qr-image/${qr.code}`}
-                                            alt={`QR ${qr.code}`}
-                                            className="w-16 h-16 rounded-xl border border-white/10 bg-white p-1"
-                                        />
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => copyToClipboard(qr.code)}
-                                            className="px-6 py-3.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/5 flex items-center justify-center gap-2 group/btn"
-                                        >
-                                            <Copy size={14} className="group-hover/btn:scale-110 transition-transform" /> Copy Pointer
-                                        </button>
-                                        <a
-                                            href={`/p/${qr.code}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="p-3.5 bg-white/5 hover:bg-blue-600 hover:text-white rounded-2xl transition-all border border-white/5 flex items-center justify-center text-slate-500"
-                                        >
-                                            <MousePointer2 size={18} />
-                                        </a>
-                                    </div>
-                                </motion.div>
-                            ))}
+                                        <div className="px-6 py-3 bg-emerald-600/10 text-emerald-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/10">
+                                            Verified Pack
+                                        </div>
+                                    </motion.div>
+                                ))
+                            )}
                         </AnimatePresence>
 
                         {selectedProduct && qrCodes.length === 0 && (

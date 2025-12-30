@@ -5,5 +5,6 @@ from app.models.reel import Reel
 from app.models.company import Company
 from app.models.product import Product
 from app.models.qr_code import QRCode
+from app.models.qr_batch import QRBatch
 
-__all__ = ["User", "Coupon", "Reward", "Reel", "Company", "Product", "QRCode"]
+__all__ = ["User", "Coupon", "Reward", "Reel", "Company", "Product", "QRCode", "QRBatch"]

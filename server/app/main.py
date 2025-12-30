@@ -27,24 +27,26 @@ app = FastAPI(
     redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None
 )
 
-# CORS Middleware
-# In production, ONLY the official frontend URL should be allowed
-allowed_origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    settings.FRONTEND_URL
-]
-
-# Filtering out None or empty strings from origins
-allowed_origins = [origin for origin in allowed_origins if origin]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS Middleware configuration
+if settings.ENVIRONMENT == "development":
+    # Permissive for local development across various ports/IPs
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Strict for production
+    allowed_origins = [origin for origin in [settings.FRONTEND_URL, settings.VERCEL_URL] if origin]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")

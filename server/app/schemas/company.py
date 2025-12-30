@@ -10,8 +10,14 @@ class CompanyBase(BaseModel):
 
 class ProductSimple(BaseModel):
     name: str
-    mrp: Optional[float] = 0.0
-    selling_price: Optional[float] = 0.0
+    sku_prefix: Optional[str] = None
+    cashback_amount: Optional[float] = 100.0
+    amazon_url: Optional[str] = None
+    flipkart_url: Optional[str] = None
+    meesho_url: Optional[str] = None
+    myntra_url: Optional[str] = None
+    nykaa_url: Optional[str] = None
+    jiomart_url: Optional[str] = None
 
 class CompanyCreate(CompanyBase):
     products: Optional[List[ProductSimple]] = []

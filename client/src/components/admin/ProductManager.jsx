@@ -13,7 +13,26 @@ export default function ProductManager() {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [showCompanyModal, setShowCompanyModal] = useState(false)
-    const [newCompany, setNewCompany] = useState({ name: '', website: '', description: '', products: [{ name: '', cashback_amount: 100 }] })
+    const [newCompany, setNewCompany] = useState({
+        name: '',
+        website: '',
+        description: '',
+        products: [{
+            name: '',
+            cashback_amount: 100,
+            sku_prefix: '',
+            amazon_url: '',
+            flipkart_url: '',
+            meesho_url: '',
+            myntra_url: '',
+            nykaa_url: '',
+            jiomart_url: ''
+        }]
+    })
+    const [showQRModal, setShowQRModal] = useState(false)
+    const [selectedProduct, setSelectedProduct] = useState(null)
+    const [qrQuantity, setQrQuantity] = useState(100)
+    const [qrGenerating, setQrGenerating] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -40,7 +59,7 @@ export default function ProductManager() {
             await productService.admin.createCompany(newCompany)
             toast.success('System: Brand Profile & Products Registered')
             setShowCompanyModal(false)
-            setNewCompany({ name: '', website: '', description: '', products: [{ name: '', cashback_amount: 100 }] })
+            setNewCompany({ name: '', website: '', description: '', products: [{ name: '', cashback_amount: 100, sku_prefix: '', amazon_url: '', flipkart_url: '', meesho_url: '', myntra_url: '', nykaa_url: '', jiomart_url: '' }] })
             fetchData()
         } catch (error) {
             toast.error('Failed to add company')
@@ -50,7 +69,7 @@ export default function ProductManager() {
     const addProductField = () => {
         setNewCompany({
             ...newCompany,
-            products: [...newCompany.products, { name: '', cashback_amount: 100 }]
+            products: [...newCompany.products, { name: '', cashback_amount: 100, sku_prefix: '', amazon_url: '', flipkart_url: '', meesho_url: '', myntra_url: '', nykaa_url: '', jiomart_url: '' }]
         })
     }
 
@@ -63,6 +82,37 @@ export default function ProductManager() {
         const updatedProducts = [...newCompany.products]
         updatedProducts[index][field] = value
         setNewCompany({ ...newCompany, products: updatedProducts })
+    }
+
+    const handleGenerateBatch = async (e) => {
+        e.preventDefault()
+        if (!selectedProduct || qrQuantity < 1) return
+
+        setQrGenerating(true)
+        const loadToast = toast.loading(`Generating ${qrQuantity} QR Codes...`)
+
+        try {
+            const response = await productService.admin.generateBatchPDF(selectedProduct.id, qrQuantity)
+
+            // Handle Blob Download
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `QR_${qrQuantity}_${selectedProduct.name.replace(/\s+/g, '_')}.pdf`)
+            document.body.appendChild(link)
+            link.click()
+
+            // Cleanup
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+
+            toast.success('Bundle Generated & Downloaded', { id: loadToast })
+            setShowQRModal(false)
+        } catch (error) {
+            toast.error('Generation Failed', { id: loadToast })
+        } finally {
+            setQrGenerating(false)
+        }
     }
 
     if (loading) {
@@ -96,7 +146,6 @@ export default function ProductManager() {
                 </button>
             </header>
 
-            {/* Performance Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-[#0b1022] p-8 rounded-[2.5rem] border border-white/5 flex items-center justify-between group hover:border-blue-500/20 transition-all">
                     <div>
@@ -127,7 +176,6 @@ export default function ProductManager() {
                 </div>
             </div>
 
-            {/* Catalog Grid View */}
             <div className="bg-[#0b1022] rounded-[3rem] border border-white/5 overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -140,7 +188,7 @@ export default function ProductManager() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {products.map((product, idx) => (
+                            {products.map((product) => (
                                 <tr key={product.id} className="hover:bg-blue-600/[0.02] transition-colors group">
                                     <td className="px-10 py-8">
                                         <div className="flex items-center gap-6">
@@ -149,7 +197,10 @@ export default function ProductManager() {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-white tracking-tight text-lg">{product.name}</div>
-                                                <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Class: {product.category}</div>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Class: {product.category}</div>
+                                                    <div className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/10 uppercase tracking-widest">{product.sku_prefix || 'NO-SKU'}</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -163,7 +214,16 @@ export default function ProductManager() {
                                         <div className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">PER UNIT</div>
                                     </td>
                                     <td className="px-10 py-8 text-right">
-                                        <div className="flex justify-end gap-2 opacity-20 group-hover:opacity-100 transition-all">
+                                        <div className="flex justify-end gap-3 opacity-20 group-hover:opacity-100 transition-all">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedProduct(product)
+                                                    setShowQRModal(true)
+                                                }}
+                                                className="px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-emerald-500/20"
+                                            >
+                                                Batch QR
+                                            </button>
                                             <button className="p-3 hover:bg-blue-600 hover:text-white rounded-xl transition text-slate-500 border border-transparent hover:border-blue-500/50">
                                                 <Edit2 size={16} />
                                             </button>
@@ -185,14 +245,10 @@ export default function ProductManager() {
                 )}
             </div>
 
-            {/* Production Grade Modals */}
             <AnimatePresence>
-                {/* Product Modal Removed */}
-
                 {showCompanyModal && (
                     <Modal title="Register Brand" subtitle="Add New Partner Company" onClose={() => setShowCompanyModal(false)}>
                         <form onSubmit={handleCreateCompany} className="space-y-6">
-                            {/* Visual Header - Compressed */}
                             <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600/20 via-teal-600/10 to-transparent p-5 rounded-3xl border border-emerald-500/20">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-3xl"></div>
                                 <div className="relative flex items-center gap-4">
@@ -210,7 +266,6 @@ export default function ProductManager() {
                                 </div>
                             </div>
 
-                            {/* Form Fields */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <FormGroup label="Company Name" icon={<Building2 size={14} />}>
                                     <input
@@ -244,7 +299,6 @@ export default function ProductManager() {
                                 </div>
                             </div>
 
-                            {/* Dynamic Products Section */}
                             <div className="space-y-4 pt-4 border-t border-white/5">
                                 <div className="flex items-center justify-between">
                                     <div className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
@@ -283,6 +337,18 @@ export default function ProductManager() {
                                                         />
                                                     </FormGroup>
                                                 </div>
+                                                <div className="sm:col-span-1">
+                                                    <FormGroup label="SKU Prefix (3-4 Letters)">
+                                                        <input
+                                                            required
+                                                            maxLength={4}
+                                                            value={product.sku_prefix}
+                                                            onChange={e => updateProductField(index, 'sku_prefix', e.target.value.toUpperCase())}
+                                                            className="premium-input h-10 py-0 font-mono"
+                                                            placeholder="e.g., APG"
+                                                        />
+                                                    </FormGroup>
+                                                </div>
                                                 <FormGroup label="Cashback (₹)">
                                                     <input
                                                         required
@@ -293,13 +359,60 @@ export default function ProductManager() {
                                                         placeholder="0.00"
                                                     />
                                                 </FormGroup>
+                                                <FormGroup label="Amazon Product URL">
+                                                    <input
+                                                        value={product.amazon_url}
+                                                        onChange={e => updateProductField(index, 'amazon_url', e.target.value)}
+                                                        className="premium-input h-10 py-0"
+                                                        placeholder="https://amazon.in/dp/..."
+                                                    />
+                                                </FormGroup>
+                                                <FormGroup label="Flipkart Product URL">
+                                                    <input
+                                                        value={product.flipkart_url}
+                                                        onChange={e => updateProductField(index, 'flipkart_url', e.target.value)}
+                                                        className="premium-input h-10 py-0"
+                                                        placeholder="https://flipkart.com/p/..."
+                                                    />
+                                                </FormGroup>
+                                                <FormGroup label="Meesho Product URL">
+                                                    <input
+                                                        value={product.meesho_url}
+                                                        onChange={e => updateProductField(index, 'meesho_url', e.target.value)}
+                                                        className="premium-input h-10 py-0"
+                                                        placeholder="https://meesho.com/..."
+                                                    />
+                                                </FormGroup>
+                                                <FormGroup label="Myntra Product URL">
+                                                    <input
+                                                        value={product.myntra_url}
+                                                        onChange={e => updateProductField(index, 'myntra_url', e.target.value)}
+                                                        className="premium-input h-10 py-0"
+                                                        placeholder="https://myntra.com/..."
+                                                    />
+                                                </FormGroup>
+                                                <FormGroup label="Nykaa Product URL">
+                                                    <input
+                                                        value={product.nykaa_url}
+                                                        onChange={e => updateProductField(index, 'nykaa_url', e.target.value)}
+                                                        className="premium-input h-10 py-0"
+                                                        placeholder="https://nykaa.com/..."
+                                                    />
+                                                </FormGroup>
+                                                <FormGroup label="JioMart Product URL">
+                                                    <input
+                                                        value={product.jiomart_url}
+                                                        onChange={e => updateProductField(index, 'jiomart_url', e.target.value)}
+                                                        className="premium-input h-10 py-0"
+                                                        placeholder="https://jiomart.com/..."
+                                                    />
+                                                </FormGroup>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Submit Button */}
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
@@ -308,6 +421,59 @@ export default function ProductManager() {
                             >
                                 <ShieldCheck size={18} />
                                 Commit Brand Entry
+                            </motion.button>
+                        </form>
+                    </Modal>
+                )}
+
+                {showQRModal && selectedProduct && (
+                    <Modal
+                        title="Mass QR Generation"
+                        subtitle={`Creating printed batch for: ${selectedProduct.name}`}
+                        onClose={() => !qrGenerating && setShowQRModal(false)}
+                    >
+                        <form onSubmit={handleGenerateBatch} className="space-y-8">
+                            <div className="bg-emerald-600/5 p-6 rounded-[2rem] border border-emerald-500/10">
+                                <FormGroup label="Print Quantity" icon={<Layers size={14} className="text-emerald-500" />}>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            required
+                                            type="number"
+                                            min="1"
+                                            max="500"
+                                            value={qrQuantity}
+                                            onChange={e => setQrQuantity(e.target.value)}
+                                            className="premium-input bg-emerald-900/10 border-emerald-500/20 text-emerald-400 text-2xl font-black h-16 text-center"
+                                            placeholder="100"
+                                        />
+                                        <div className="text-xs font-black text-slate-600 uppercase tracking-widest w-24">
+                                            Unique Labels
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-4 font-bold uppercase tracking-tighter leading-relaxed">
+                                        * System will generate unique encrypted codes and compile them into a high-print-quality PDF grid (4×6 per page).
+                                    </p>
+                                </FormGroup>
+                            </div>
+
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                type="submit"
+                                disabled={qrGenerating}
+                                className="w-full py-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-2xl shadow-emerald-500/20 flex items-center justify-center gap-3"
+                            >
+                                {qrGenerating ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                        Compiling PDF...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={18} />
+                                        Initialize Instant Download
+                                    </>
+                                )}
                             </motion.button>
                         </form>
                     </Modal>
@@ -344,7 +510,7 @@ export default function ProductManager() {
                     border-color: rgba(148, 163, 184, 0.2);
                 }
             `}} />
-        </div >
+        </div>
     )
 }
 

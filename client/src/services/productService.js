@@ -40,6 +40,17 @@ export const productService = {
         },
         getProductQRs: async (productId) => {
             return api.get(`/admin/catalog/products/${productId}/qr-codes`)
+        },
+        generateBatchPDF: async (productId, quantity) => {
+            return api.post(`/admin/catalog/products/${productId}/generate-pdf-batch?quantity=${quantity}`, {}, {
+                responseType: 'blob'
+            })
+        },
+        getBatchHistory: async (productId) => {
+            return api.get(`/admin/catalog/products/${productId}/batches`)
+        },
+        getCompanyBatchHistory: async (companyId) => {
+            return api.get(`/admin/catalog/companies/${companyId}/batches`)
         }
     }
 }

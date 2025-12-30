@@ -9,9 +9,12 @@ class QRCode(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    batch_id = Column(Integer, ForeignKey("qr_batches.id"), nullable=True)
     
     # Unique identifier for the QR code (used in URL)
-    code = Column(String(50), unique=True, index=True, default=lambda: str(uuid.uuid4())[:8])
+    # Refactored to allow Prefix-Serial or UUID
+    code = Column(String(50), unique=True, index=True)
+    serial_number = Column(Integer, nullable=True) # Serial within the product
     
     # Tracking
     scan_count = Column(Integer, default=0)
@@ -23,6 +26,7 @@ class QRCode(Base):
     
     # Relationships
     product = relationship("Product", back_populates="qr_codes")
+    batch = relationship("QRBatch", back_populates="qr_codes")
     
     created_at = Column(DateTime, default=datetime.utcnow)
 

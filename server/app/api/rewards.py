@@ -42,58 +42,7 @@ async def submit_reward(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(screenshot.file, buffer)
     
-    # AI Analysis - Verify 5-star rating (OPTIONAL - works without API key)
-    ai_verified = False
-    detected_rating = None
-    detected_comment = None
-    ai_confidence = None
-    ai_analysis_status = "pending"
-    
-    try:
-        from app.services.ai_service import ai_service
-        
-        print(f"🔍 Starting AI analysis for: {file_path}")
-        is_five_star, analysis = ai_service.verify_five_star(file_path)
-        
-        print(f"📊 AI Analysis Result: {analysis}")
-        print(f"⭐ Is 5-star: {is_five_star}")
-        
-        # Store AI analysis results
-        ai_verified = True
-        detected_rating = analysis.get('rating')
-        detected_comment = analysis.get('comment')
-        ai_confidence = analysis.get('confidence')
-        ai_analysis_status = analysis.get('status')
-        
-        print(f"✅ AI Analysis Complete - Rating: {detected_rating}, Status: {ai_analysis_status}")
-        
-        # Only enforce 5-star requirement if AI analysis succeeded
-        if ai_analysis_status == 'success' and not is_five_star:
-            # Delete uploaded file
-            os.remove(file_path)
-            
-            print(f"❌ Rejecting {detected_rating}-star review")
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "message": f"Only 5-star reviews are eligible for rewards. Detected: {detected_rating} stars",
-                    "detected_rating": detected_rating,
-                    "detected_comment": detected_comment,
-                    "suggestion": "Please modify your review to 5 stars and upload again"
-                }
-            )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        # If AI analysis fails, still allow submission (for testing)
-        print(f"⚠️ AI Analysis failed (continuing without verification): {str(e)}")
-        import traceback
-        traceback.print_exc()
-        ai_verified = False
-        ai_analysis_status = "failed"
-    
-    # Verify Coupon and Fetch Product Name (Locked logic)
+    # Fetch Product Data for AI Context
     qr = db.query(QRCode).filter(QRCode.code == coupon_code.upper()).first()
     if not qr:
         raise HTTPException(status_code=404, detail="Invalid coupon code")
@@ -101,36 +50,101 @@ async def submit_reward(
     if qr.is_used:
         raise HTTPException(status_code=400, detail="This coupon code has already been claimed")
     
-    # Get product name from QR code context
     product = db.query(Product).filter(Product.id == qr.product_id).first()
-    final_product_name = product.name if product else "Unknown Product"
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
 
-    # Create reward record with AI analysis
-    # Auto-approve if AI confirms 5-star rating
+    # Autonomous AI Analysis - 2 Step Process
+    ai_verified = False
+    is_auto_approved = False
+    ai_decision_log = ""
     reward_status = "pending"
-    if ai_analysis_status == "success" and is_five_star:
-        reward_status = "approved"
+    
+    try:
+        from app.services.ai_service import ai_service
+        
+        target_urls = {
+            "amazon": product.amazon_url,
+            "flipkart": product.flipkart_url,
+            "meesho": product.meesho_url,
+            "myntra": product.myntra_url,
+            "nykaa": product.nykaa_url,
+            "jiomart": product.jiomart_url
+        }
+        
+        print(f"🤖 Starting 2-Step AI Verification for: {product.name}")
+        ai_result = ai_service.autonomous_verification(
+            file_path, 
+            product.name, 
+            target_urls
+        )
+        
+        ai_verified = True
+        detected_rating = ai_result.get('detected_rating', 0)
+        
+        # STEP 1: Check for 5-star rating (MANDATORY)
+        if detected_rating != 5:
+            # Delete uploaded file
+            os.remove(file_path)
+            
+            print(f"❌ REJECTED: Only 5-star reviews are eligible. Detected: {detected_rating} stars")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "message": f"केवल 5-स्टार रिव्यू के लिए कैशबैक मिलेगा। आपका रिव्यू: {detected_rating} स्टार",
+                    "detected_rating": detected_rating,
+                    "suggestion": "कृपया अपना रिव्यू 5 स्टार में बदलें और फिर से अपलोड करें"
+                }
+            )
+        
+        print(f"✅ Step 1 Passed: 5-Star Review Detected")
+        
+        # STEP 2: Platform Match Check
+        ai_decision_log = ai_result.get('decision_reasoning', 'No reasoning provided')
+        
+        if ai_result.get('auto_approve', False):
+            # AI found the review on platform with high confidence
+            print("✅ Step 2 Passed: Review FOUND on Platform → AUTO-APPROVED")
+            reward_status = "approved"
+            is_auto_approved = True
+            ai_decision_log = f"✅ Auto-Approved: {ai_decision_log}"
+        else:
+            # AI couldn't confirm platform match - needs manual verification
+            print(f"🔄 Step 2 Failed: Review NOT FOUND on Platform → PENDING for Admin Review")
+            print(f"   Reasoning: {ai_decision_log}")
+            reward_status = "pending"
+            ai_decision_log = f"⚠️ Manual Review Required: {ai_decision_log}"
+            
+    except HTTPException:
+        # Re-raise validation errors (like non-5-star)
+        raise
+    except Exception as e:
+        print(f"❌ AI Verification System Error: {str(e)}")
+        ai_decision_log = f"System Error: {str(e)}"
+        # On error, keep as pending for manual review
 
+    # Create reward record
     reward = Reward(
         user_id=current_user.id,
         name=name,
         phone=phone,
         email=current_user.email,
         address="N/A",
-        product_name=final_product_name,  # Derived from DB, not user input
+        product_name=product.name,
         purchase_date=datetime.now(),
         review_screenshot=f"/{file_path}",
         platform_name=platform,
-        coupon_code=coupon_code.upper(), # Store the code used
+        coupon_code=coupon_code.upper(),
         upi_id=upi_id,
-        payment_amount=product.cashback_amount if product else 100.0,
+        payment_amount=product.cashback_amount or 100.0,
         status=reward_status,
-        # AI Analysis fields
+        # AI Fields
         ai_verified=ai_verified,
-        detected_rating=detected_rating,
-        detected_comment=detected_comment,
-        ai_confidence=ai_confidence,
-        ai_analysis_status=ai_analysis_status
+        is_auto_approved=is_auto_approved,
+        ai_decision_log=ai_decision_log,
+        detected_rating=ai_result.get('detected_rating') if 'ai_result' in locals() else None,
+        ai_confidence=ai_result.get('confidence_score') if 'ai_result' in locals() else None,
+        ai_analysis_status="success" if ai_verified else "failed"
     )
     
     # Mark QR code as used

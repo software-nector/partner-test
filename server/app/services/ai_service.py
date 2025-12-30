@@ -1,7 +1,7 @@
 import os
 import base64
 from typing import Dict, Optional
-import google.generativeai as genai
+from openai import OpenAI
 from PIL import Image
 import io
 from dotenv import load_dotenv
@@ -10,26 +10,126 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class AIAnalysisService:
-    """Service for analyzing review screenshots using Google Gemini Vision API"""
+    """Service for analyzing review screenshots using OpenAI GPT-4 Vision API"""
     
     def __init__(self):
         # Get API key from environment
-        api_key = os.getenv("GEMINI_API_KEY")
+        api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            print("⚠️ GEMINI_API_KEY not found in environment variables")
+            print("⚠️ OPENAI_API_KEY not found in environment variables")
             print(f"   Current working directory: {os.getcwd()}")
             print(f"   .env file exists: {os.path.exists('.env')}")
-            self.model = None
+            self.client = None
             return
         
         try:
-            genai.configure(api_key=api_key)
-            # Use Gemini 2.0 Flash model with vision capabilities
-            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
-            print("✅ Gemini AI Service initialized successfully with gemini-2.0-flash-exp")
+            self.client = OpenAI(api_key=api_key)
+            print("✅ OpenAI GPT-4 Vision Service initialized successfully")
         except Exception as e:
-            print(f"❌ Failed to initialize Gemini: {str(e)}")
-            self.model = None
+            print(f"❌ Failed to initialize OpenAI: {str(e)}")
+            self.client = None
+    
+    def autonomous_verification(self, image_path: str, target_product_name: str, target_urls: Dict[str, str]) -> Dict:
+        """
+        Perform a fully autonomous verification of a review screenshot
+        
+        Args:
+            image_path: Path to the screenshot
+            target_product_name: The expected product name from DB
+            target_urls: Dictionary of authorized marketplace links (amazon, flipkart)
+            
+        Returns:
+            Dict with verification results and auto-approval status
+        """
+        if not self.client:
+            return {'status': 'failed', 'error': 'AI Model not initialized'}
+            
+        try:
+            # Encode image to base64
+            with open(image_path, "rb") as image_file:
+                base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            
+            # Format URLs for AI context
+            urls_context = "\n".join([f"- {plat.capitalize()}: {url}" for plat, url in target_urls.items() if url])
+            
+            prompt = f"""
+            SYSTEM TASK: AUTONOMOUS REVIEW VERIFICATION
+            You are the final judge for a reward program. Your job is to verify if this screenshot shows a GENUINE, 5-STAR review for a specific product.
+            
+            TARGET PRODUCT DATA:
+            - Authorized Name: "{target_product_name}"
+            - Authorized Store Links:
+            {urls_context}
+            
+            INSTRUCTIONS:
+            1. **Extract Reviewer Identity**: Find the name of the person who wrote the review.
+            2. **Extract Unique Text Snippet**: Extract the first 2-3 sentences of the review text. 
+            3. **Verify Product Match**: Does the product name in the screenshot match our "Authorized Name"? Look for "Purna" keyword.
+            4. **Verify Rating**: Is it a 5-star review?
+            5. **Verify Marketplace**: Is it from Amazon, Flipkart, Meesho, Myntra, Nykaa, JioMart, or any other e-commerce platform?
+            6. **Search Matching**: If you were to search this text on the marketplace, would it be a clear match?
+            
+            SAFETY NET LOGIC:
+            - If you are 100% CONFIDENT (Product Match + 5 Stars + On-Platform Match), set auto_approve to true.
+            - If you are UNSURE, or the text is hard to read, or the link match is not perfect, set auto_approve to false. 
+            **DO NOT REJECT IF UNSURE; instead, set auto_approve to false so a Human Admin can check.**
+            
+            Return your response in this JSON format:
+            {{
+                "is_match": true/false,
+                "confidence_score": 0.95,
+                "extracted_reviewer": "Name",
+                "extracted_text_snippet": "Full text...",
+                "detected_rating": 5,
+                "detected_platform": "Amazon",
+                "is_verified_badge_present": true,
+                "decision_reasoning": "Explain your decision. If auto_approve is false, tell the Admin what to look for."
+            }}
+            """
+            
+            response = self.client.chat.completions.create(
+                model="gpt-4o",  # GPT-4 Vision model
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=500
+            )
+            
+            result = self._parse_json(response.choices[0].message.content)
+            
+            # Final Autonomous Decision
+            result['auto_approve'] = (
+                result.get('is_match', False) and 
+                result.get('detected_rating') == 5 and 
+                result.get('confidence_score', 0) > 0.85
+            )
+            
+            return result
+            
+        except Exception as e:
+            return {'status': 'failed', 'error': str(e)}
+
+    def _parse_json(self, text: str) -> Dict:
+        """Helper to safely parse JSON from AI response"""
+        import json
+        import re
+        try:
+            # Clean possible markdown
+            clean_text = re.sub(r'```json\s*|\s*```', '', text).strip()
+            return json.loads(clean_text)
+        except:
+            return {"error": "JSON parse failed", "raw": text}
     
     def analyze_screenshot(self, image_path: str) -> Dict:
         """
@@ -41,22 +141,23 @@ class AIAnalysisService:
         Returns:
             Dict with keys: rating, comment, confidence, status
         """
-        # Check if model is available
-        if not self.model:
+        # Check if client is available
+        if not self.client:
             return {
                 'rating': 0,
                 'comment': '',
                 'platform': '',
                 'confidence': 0.0,
                 'status': 'failed',
-                'error': 'Gemini API not configured'
+                'error': 'OpenAI API not configured'
             }
         
         try:
-            # Open and validate image
-            img = Image.open(image_path)
+            # Encode image to base64
+            with open(image_path, "rb") as image_file:
+                base64_image = base64.b64encode(image_file.read()).decode('utf-8')
             
-            # Create prompt for Gemini
+            # Create prompt for OpenAI
             prompt = """
             Analyze this product review screenshot carefully and extract the following information:
             
@@ -82,10 +183,27 @@ class AIAnalysisService:
             """
             
             # Generate content with image
-            response = self.model.generate_content([prompt, img])
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=300
+            )
             
             # Parse response
-            result = self._parse_response(response.text)
+            result = self._parse_response(response.choices[0].message.content)
             result['status'] = 'success'
             
             return result

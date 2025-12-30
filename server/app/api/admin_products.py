@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.company import Company
 from app.models.product import Product
 from app.models.qr_code import QRCode
+from app.models.qr_batch import QRBatch
 from app.schemas.company import CompanyCreate, CompanyResponse, CompanyUpdate
 from app.schemas.product import ProductCreate, ProductResponse, ProductUpdate, QRCodeResponse
 from app.api.admin import verify_admin # Reuse admin auth dependency
@@ -40,9 +41,14 @@ async def create_company(company: CompanyCreate, db: Session = Depends(get_db), 
             product = Product(
                 company_id=db_company.id,
                 name=p_data.name,
-                mrp=p_data.mrp,
-                selling_price=p_data.selling_price,
-                cashback_amount=getattr(p_data, 'cashback_amount', 100.0)
+                sku_prefix=p_data.sku_prefix,
+                cashback_amount=p_data.cashback_amount,
+                amazon_url=p_data.amazon_url,
+                flipkart_url=p_data.flipkart_url,
+                meesho_url=p_data.meesho_url,
+                myntra_url=p_data.myntra_url,
+                nykaa_url=p_data.nykaa_url,
+                jiomart_url=p_data.jiomart_url
             )
             db.add(product)
     
@@ -137,39 +143,148 @@ async def generate_bulk_qr(product_id: int, quantity: int, db: Session = Depends
         "codes": [QRCodeResponse.model_validate(qr) for qr in generated_codes]
     }
 
+@router.get("/products/{product_id}/qr-image/{code}")
+async def get_qr_image(product_id: int, code: str, db: Session = Depends(get_db)):
+    """Generate and return a single QR code image"""
+    from fastapi.responses import StreamingResponse
+    from app.services.qr_service import qr_service
+    
+    # Verify QR code exists for this product
+    qr = db.query(QRCode).filter(QRCode.product_id == product_id, QRCode.code == code).first()
+    if not qr:
+        raise HTTPException(status_code=404, detail="QR code not found")
+    
+    img_buffer = qr_service.generate_qr_image(qr.code)
+    return StreamingResponse(img_buffer, media_type="image/png")
+
+@router.post("/products/{product_id}/generate-pdf-batch")
+async def generate_pdf_batch(product_id: int, quantity: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
+    """Generate multiple QR codes and return PDF immediately"""
+    from fastapi.responses import StreamingResponse
+    from app.services.qr_service import qr_service
+    from app.config import settings
+
+    # Verify product exists
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Validate quantity
+    if quantity < 1 or quantity > 500:
+        raise HTTPException(status_code=400, detail="Quantity must be between 1 and 500")
+    
+    # 1. Determine Serial Start and Batch Number
+    # Get last serial number for this product
+    last_qr = db.query(QRCode).filter(QRCode.product_id == product_id).order_by(QRCode.serial_number.desc()).first()
+    serial_start = (last_qr.serial_number + 1) if last_qr and last_qr.serial_number else 1
+    
+    # Get last batch number
+    last_batch = db.query(QRBatch).filter(QRBatch.product_id == product_id).order_by(QRBatch.batch_number.desc()).first()
+    next_batch_num = (last_batch.batch_number + 1) if last_batch else 1
+    
+    # 2. Create the Batch record
+    db_batch = QRBatch(
+        product_id=product_id,
+        batch_number=next_batch_num,
+        quantity=quantity,
+        serial_start=serial_start,
+        serial_end=serial_start + quantity - 1
+    )
+    db.add(db_batch)
+    db.flush() # Get batch ID
+    
+    # 3. Generate new codes in DB
+    generated_qr_objects = []
+    base_url = settings.FRONTEND_URL.rstrip('/')
+    sku = (product.sku_prefix or "QR").upper()
+    
+    for i in range(quantity):
+        current_serial = serial_start + i
+        # Format: SKU-SERIAL (e.g. APG-001) with padding
+        display_code = f"{sku}-{str(current_serial).zfill(3)}"
+        
+        # Unique secret for verification (prevents guessing next serial easily)
+        secret = str(uuid.uuid4())[:4].upper()
+        unique_validator = f"{display_code}-{secret}"
+        
+        db_qr = QRCode(
+            product_id=product_id, 
+            batch_id=db_batch.id,
+            code=unique_validator,
+            serial_number=current_serial
+        )
+        db.add(db_qr)
+        generated_qr_objects.append(db_qr)
+    
+    db.commit()
+    
+    # 3. Prepare data for PDF
+    qr_data = [(qr.code, f"{base_url}/p/{qr.code}") for qr in generated_qr_objects]
+    
+    # 4. Generate PDF in memory (RAM)
+    batch_info = {
+        "number": db_batch.batch_number,
+        "serial_start": db_batch.serial_start,
+        "serial_end": db_batch.serial_end
+    }
+    pdf_buffer = qr_service.generate_bulk_pdf(qr_data, product.name, batch_info=batch_info)
+    
+    filename = f"QR_{quantity}_{product.name.replace(' ', '_')}.pdf"
+    
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )
+
+@router.get("/companies/{company_id}/batches")
+async def get_company_batches(company_id: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
+    """Get all QR generation batches for all products of a company"""
+    batches = db.query(QRBatch).join(Product).filter(Product.company_id == company_id).order_by(QRBatch.created_at.desc()).all()
+    
+    return [
+        {
+            "id": b.id,
+            "product_id": b.product_id,
+            "product_name": b.product.name,
+            "batch_number": b.batch_number,
+            "quantity": b.quantity,
+            "serial_start": b.serial_start,
+            "serial_end": b.serial_end,
+            "created_at": b.created_at
+        } for b in batches
+    ]
+
+@router.get("/products/{product_id}/batches")
+async def get_product_batches(product_id: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
+    """Get all QR generation batches for a product"""
+    batches = db.query(QRBatch).filter(QRBatch.product_id == product_id).order_by(QRBatch.created_at.desc()).all()
+    return [
+        {
+            "id": b.id,
+            "product_id": b.product_id,
+            "product_name": b.product.name,
+            "batch_number": b.batch_number,
+            "quantity": b.quantity,
+            "serial_start": b.serial_start,
+            "serial_end": b.serial_end,
+            "created_at": b.created_at
+        } for b in batches
+    ]
+
 @router.get("/products/{product_id}/qr-codes", response_model=List[QRCodeResponse])
 async def get_product_qr_codes(product_id: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     return db.query(QRCode).filter(QRCode.product_id == product_id).all()
 
-@router.get("/products/{product_id}/qr-image/{code}")
-async def get_qr_image(product_id: int, code: str, db: Session = Depends(get_db)):
-    """Get QR code as PNG image"""
-    from fastapi.responses import StreamingResponse
-    from app.services.qr_service import qr_service
-    
-    # Verify QR code exists
-    qr = db.query(QRCode).filter(
-        QRCode.code == code,
-        QRCode.product_id == product_id
-    ).first()
-    
-    if not qr:
-        raise HTTPException(status_code=404, detail="QR code not found")
-    
-    # Generate image
-    img_buffer = qr_service.generate_qr_image(code)
-    
-    return StreamingResponse(
-        img_buffer,
-        media_type="image/png",
-        headers={"Content-Disposition": f"inline; filename=qr_{code}.png"}
-    )
-
 @router.get("/products/{product_id}/qr-pdf")
 async def download_qr_pdf(product_id: int, db: Session = Depends(get_db)):
-    """Download all QR codes as PDF in 4×6 grid"""
+    """Download existing QR codes as PDF"""
     from fastapi.responses import StreamingResponse
     from app.services.qr_service import qr_service
+    from app.config import settings
     
     # Get product
     product = db.query(Product).filter(Product.id == product_id).first()
@@ -182,8 +297,9 @@ async def download_qr_pdf(product_id: int, db: Session = Depends(get_db)):
     if not qr_codes:
         raise HTTPException(status_code=404, detail="No QR codes found for this product")
     
-    # Prepare data for PDF
-    qr_data = [(qr.code, f"http://localhost:3000/p/{qr.code}") for qr in qr_codes]
+    # Prepare data for PDF using config URL
+    base_url = settings.FRONTEND_URL.rstrip('/')
+    qr_data = [(qr.code, f"{base_url}/p/{qr.code}") for qr in qr_codes]
     
     # Generate PDF
     pdf_buffer = qr_service.generate_bulk_pdf(qr_data, product.name)

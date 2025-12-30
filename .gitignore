@@ -1,15 +1,15 @@
 # Dependencies
 node_modules/
 
-# Environment files
+# Environment files (IMPORTANT: Never upload these!)
 .env
 .env.*
+*.env
 
 # Databases
 *.db
 
 # Build files
-# dist/
 build/
 
 # Logs
@@ -30,3 +30,10 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Uploads (User data - don't upload to GitHub)
+server/uploads/
+server/static/uploads/
+
+# Alembic compiled files
+*.pyc

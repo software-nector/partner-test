@@ -13,18 +13,20 @@ class Product(Base):
     description = Column(Text, nullable=True)
     image_url = Column(String(500), nullable=True)
     
-    # Pricing
-    mrp = Column(Float, nullable=False)
-    selling_price = Column(Float, nullable=False)
     cashback_amount = Column(Float, default=100.0)
     
-    # Marketplace Links
+    # Marketplace Links (Multiple Platforms)
     amazon_url = Column(String(500), nullable=True)
     flipkart_url = Column(String(500), nullable=True)
+    meesho_url = Column(String(500), nullable=True)
+    myntra_url = Column(String(500), nullable=True)
+    nykaa_url = Column(String(500), nullable=True)
+    jiomart_url = Column(String(500), nullable=True)
     website_url = Column(String(500), nullable=True)
     
     # Meta
     category = Column(String(100), nullable=True)
+    sku_prefix = Column(String(10), nullable=True) # e.g., 'APG' for Apple Gummies
     is_active = Column(Boolean, default=True)
     
     # Relationships

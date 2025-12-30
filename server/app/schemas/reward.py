@@ -34,6 +34,13 @@ class RewardResponse(BaseModel):
     upi_id: Optional[str] = None
     payment_amount: Optional[float] = None
     payment_date: Optional[datetime] = None
+    # AI Fields
+    ai_verified: bool = False
+    is_auto_approved: bool = False
+    ai_decision_log: Optional[str] = None
+    detected_rating: Optional[int] = None
+    ai_confidence: Optional[float] = None
+    ai_analysis_status: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

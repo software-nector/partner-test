@@ -1,6 +1,12 @@
 import axios from 'axios'
+// Smart URL detection - Priority logic for local development
+const isLocal = window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.startsWith('192.168.');
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://194.238.18.10:8001'
+export const API_URL = isLocal
+    ? 'http://localhost:8000'
+    : (import.meta.env.VITE_API_URL || 'https://partner.mypurna.com');
 
 const api = axios.create({
     baseURL: `${API_URL}/api`,

@@ -33,6 +33,8 @@ class Reward(Base):
     detected_comment = Column(Text, nullable=True)  # Review comment extracted by AI
     ai_confidence = Column(Float, nullable=True)  # AI confidence score (0.0-1.0)
     ai_analysis_status = Column(String(50), default="pending")  # pending, success, failed
+    ai_decision_log = Column(Text, nullable=True)  # Detailed AI reasoning
+    is_auto_approved = Column(Boolean, default=False)  # Flag for autonomous approval
     
     # Admin fields
     admin_notes = Column(Text, nullable=True)
