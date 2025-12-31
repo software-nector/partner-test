@@ -53,8 +53,8 @@ class Settings(BaseModel):
     GOOGLE_DRIVE_FOLDER_ID: str = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "1scIpkUKHZnV6o5milYViTlpGOw5cka_v")
     
     # Google Drive OAuth (Personal Account)
-    GOOGLE_DRIVE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
-    GOOGLE_DRIVE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
+    GOOGLE_DRIVE_CLIENT_ID: Optional[str] = os.getenv("DRIVE_CLIENT_ID")
+    GOOGLE_DRIVE_CLIENT_SECRET: Optional[str] = os.getenv("DRIVE_CLIENT_SECRET")
     GOOGLE_DRIVE_REFRESH_TOKEN: Optional[str] = os.getenv("GOOGLE_DRIVE_REFRESH_TOKEN")
 
 settings = Settings()
