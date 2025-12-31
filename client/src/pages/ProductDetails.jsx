@@ -15,23 +15,13 @@ export default function ProductDetails() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        const fetchProduct = async () => {
-            try {
-                // If the parameter is a number, it's a product ID, else it's a QR code
-                const isId = !isNaN(qrCode)
-                const response = isId
-                    ? await productService.getProduct(qrCode)
-                    : await productService.resolveQR(qrCode)
-                setProduct(response.data)
-            } catch (error) {
-                console.error('Failed to resolve product:', error)
-                toast.error('Product not found')
-                navigate('/')
-            } finally {
-                setLoading(false)
-            }
+        // Immediate redirect to homepage with QR code parameters
+        // This bypasses this page entirely as requested
+        if (qrCode) {
+            navigate(`/?code=${qrCode}&claim=true`, { replace: true });
+        } else {
+            navigate('/', { replace: true });
         }
-        fetchProduct()
     }, [qrCode, navigate])
 
     if (loading) {

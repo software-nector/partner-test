@@ -1,11 +1,15 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { Toaster } from 'react-hot-toast'
 import HomePage from './pages/HomePage'
-import ProductDetails from './pages/ProductDetails'
 import AdminLoginPage from './pages/AdminLoginPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
+
+const NavigateToHome = () => {
+    const { qrCode } = useParams()
+    return <Navigate to={`/?code=${qrCode}&claim=true`} replace />
+}
 
 function App() {
     return (
@@ -13,7 +17,7 @@ function App() {
             <Router>
                 <Routes>
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/p/:qrCode" element={<ProductDetails />} />
+                    <Route path="/p/:qrCode" element={<NavigateToHome />} />
 
                     {/* Admin routes remain separate for security/scope */}
                     <Route path="/admin/login" element={<AdminLoginPage />} />

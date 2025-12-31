@@ -47,7 +47,9 @@ class Settings(BaseModel):
     MAX_FILE_SIZE: int = 5242880  # 5MB
     UPLOAD_DIR: str = "uploads"
     
-    # Google Gemini API for AI Screenshot Analysis
+    # Google API Keys
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
+    GOOGLE_DRIVE_FOLDER_ID: str = os.getenv("GOOGLE_DRIVE_FOLDER_ID", "1scIpkUKHZnV6o5milYViTlpGOw5cka_v")
 
 settings = Settings()

@@ -37,4 +37,4 @@ server/static/uploads/
 
 # Alembic compiled files
 *.pyc
-"server/google_drive_credentials.json" 
+server/google_drive_credentials.json

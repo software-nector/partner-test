@@ -9,7 +9,7 @@ class GoogleDriveService:
     def __init__(self):
         self.scopes = ['https://www.googleapis.com/auth/drive.file']
         self.creds_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'google_drive_credentials.json')
-        self.folder_id = "1scIpkUKHZnV6o5milYViTlpGOw5cka_v" # User provided folder ID
+        self.folder_id = settings.GOOGLE_DRIVE_FOLDER_ID
         self.creds = None
         
         if os.path.exists(self.creds_path):

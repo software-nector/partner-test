@@ -50,10 +50,14 @@ export default function HomePage() {
             setCashbackForm(prev => ({ ...prev, couponCode: finalCode }))
 
             if (autoOpen) {
-                setActiveSection('claims')
+                if (isAuthenticated) {
+                    setActiveSection('claims')
+                } else {
+                    setShowLoginModal(true)
+                }
             }
         }
-    }, [location.search, location.state])
+    }, [location.search, location.state, isAuthenticated])
 
     const getDetectedProduct = () => {
         if (!cashbackForm.couponCode) return null
