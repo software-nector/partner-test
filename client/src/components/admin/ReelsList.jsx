@@ -62,6 +62,19 @@ export default function ReelsList() {
         return badges[status] || 'bg-slate-500/10 text-slate-500 border-slate-500/20'
     }
 
+    const getImagePath = (path) => {
+        if (!path) return 'https://via.placeholder.com/200x250?text=No+Image';
+        if (path.startsWith('http')) {
+            // Convert any Google Drive link to lh3 format for reliable image rendering
+            if (path.includes('drive.google.com') || path.includes('docs.google.com')) {
+                const match = path.match(/[?&]id=([^&]+)/);
+                if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+            }
+            return path;
+        }
+        return `http://194.238.18.10:8001${path.startsWith('/') ? '' : '/'}${path}`;
+    };
+
     const filters = [
         { value: 'all', label: 'All Submissions', icon: <Filter size={14} /> },
         { value: 'pending', label: 'Pending', icon: <Clock size={14} /> },
@@ -157,7 +170,7 @@ export default function ReelsList() {
                                 {/* Proof Image Preview instead of Icon */}
                                 {reel.brand_tag_proof ? (
                                     <img
-                                        src={reel.brand_tag_proof.startsWith('http') ? reel.brand_tag_proof : `http://194.238.18.10:8001/${reel.brand_tag_proof}`}
+                                        src={getImagePath(reel.brand_tag_proof)}
                                         className="w-full h-full object-cover group-hover/preview:scale-110 transition-transform duration-500"
                                         onError={(e) => e.target.style.display = 'none'}
                                     />
@@ -304,10 +317,10 @@ export default function ReelsList() {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl transition-all" onClick={() => setShowImageModal(false)}>
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative max-w-5xl w-full h-full flex flex-col justify-center items-center gap-10" onClick={e => e.stopPropagation()}>
                             <div className="relative group">
-                                <img src={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001/${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[3rem] shadow-[0_0_100px_rgba(147,51,234,0.15)] border border-white/10" />
+                                <img src={getImagePath(selectedImage)} className="max-w-full max-h-[80vh] rounded-[3rem] shadow-[0_0_100px_rgba(147,51,234,0.15)] border border-white/10" />
                                 <div className="absolute top-8 right-8 flex gap-4">
-                                    <a href={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001/${selectedImage}`} download className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><Download size={20} /></a>
-                                    <a href={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001/${selectedImage}`} target="_blank" className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><ExternalLink size={20} /></a>
+                                    <a href={getImagePath(selectedImage)} download className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><Download size={20} /></a>
+                                    <a href={getImagePath(selectedImage)} target="_blank" className="p-4 bg-white text-black rounded-2xl shadow-xl hover:scale-105 transition"><ExternalLink size={20} /></a>
                                 </div>
                             </div>
                             <button onClick={() => setShowImageModal(false)} className="px-12 py-5 bg-purple-600 text-white rounded-3xl font-black text-xs uppercase shadow-2xl shadow-purple-600/30">Close Proof Viewer</button>

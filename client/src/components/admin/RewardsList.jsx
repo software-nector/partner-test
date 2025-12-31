@@ -59,6 +59,19 @@ export default function RewardsList() {
         )
     }
 
+    const getImagePath = (path) => {
+        if (!path) return 'https://via.placeholder.com/200x250?text=No+Image';
+        if (path.startsWith('http')) {
+            // Convert any Google Drive link to lh3 format for reliable image rendering
+            if (path.includes('drive.google.com') || path.includes('docs.google.com')) {
+                const match = path.match(/[?&]id=([^&]+)/);
+                if (match) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+            }
+            return path;
+        }
+        return `http://194.238.18.10:8001${path.startsWith('/') ? '' : '/'}${path}`;
+    };
+
     const handleBulkPayment = async () => {
         try {
             const response = await adminService.bulkPayment(selectedRewards, transactionId)
@@ -269,7 +282,7 @@ export default function RewardsList() {
                                         className="aspect-[4/5] bg-slate-900 rounded-2xl border border-white/5 overflow-hidden relative group cursor-pointer"
                                     >
                                         <img
-                                            src={reward.review_screenshot?.startsWith('http') ? reward.review_screenshot : `http://194.238.18.10:8001${reward.review_screenshot}`}
+                                            src={getImagePath(reward.review_screenshot)}
                                             className="w-full h-full object-cover transition-transform group-hover:scale-110"
                                             onError={(e) => {
                                                 e.target.src = 'https://via.placeholder.com/200x250?text=Proof+Not+Found'
@@ -390,10 +403,10 @@ export default function RewardsList() {
                 {showImageModal && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl transition-all" onClick={() => setShowImageModal(false)}>
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative max-w-5xl w-full h-full flex flex-col justify-center items-center gap-8" onClick={e => e.stopPropagation()}>
-                            <img src={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001${selectedImage}`} className="max-w-full max-h-[80vh] rounded-[2rem] shadow-[0_0_100px_rgba(59,130,246,0.1)] border border-white/10" />
+                            <img src={getImagePath(selectedImage)} className="max-w-full max-h-[80vh] rounded-[2rem] shadow-[0_0_100px_rgba(59,130,246,0.1)] border border-white/10" />
                             <div className="flex gap-4">
-                                <a href={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001${selectedImage}`} download className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all"><Download size={20} /></a>
-                                <a href={selectedImage?.startsWith('http') ? selectedImage : `http://194.238.18.10:8001${selectedImage}`} target="_blank" className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all"><ExternalLink size={20} /></a>
+                                <a href={getImagePath(selectedImage)} download className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all"><Download size={20} /></a>
+                                <a href={getImagePath(selectedImage)} target="_blank" className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all"><ExternalLink size={20} /></a>
                                 <button onClick={() => setShowImageModal(false)} className="px-8 py-4 bg-white text-black rounded-2xl font-black text-xs uppercase shadow-xl">Close Preview</button>
                             </div>
                         </motion.div>

@@ -67,8 +67,8 @@ class GoogleDriveService:
                 body={'type': 'anyone', 'role': 'reader'}
             ).execute()
             
-            # Return a direct image link format
-            return f"https://docs.google.com/uc?export=view&id={file_id}"
+            # Return a direct image link format (more reliable for <img> tags)
+            return f"https://lh3.googleusercontent.com/d/{file_id}"
             
         except Exception as e:
             print(f"❌ Google Drive Upload Error: {str(e)}")
