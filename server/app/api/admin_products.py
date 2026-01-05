@@ -258,7 +258,7 @@ async def generate_pdf_batch(product_id: int, quantity: int, db: Session = Depen
         pdf_buffer,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Disposition": f'attachment; filename="{filename}"',
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
     )
@@ -330,5 +330,5 @@ async def download_qr_pdf(product_id: int, db: Session = Depends(get_db), is_adm
     return StreamingResponse(
         pdf_buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=qr_codes_{product.name.replace(' ', '_')}.pdf"}
+        headers={"Content-Disposition": f'attachment; filename="qr_codes_{product.name.replace(" ", "_")}.pdf"'}
     )
