@@ -122,19 +122,31 @@ class WhatsAppVerifyRequest(BaseModel):
 @router.post("/whatsapp/send-otp")
 async def send_whatsapp_otp(request: WhatsAppOTPRequest, db: Session = Depends(get_db)):
     """
-    Step 1: Generate and 'send' OTP via WhatsApp (Mocked)
+    Step 1: Generate and 'send' OTP via WhatsApp
     """
-    # Clean phone number
-    phone = request.phone.strip()
-    if not phone:
-        raise HTTPException(status_code=400, detail="Phone number is required")
-
-    # Generate OTP
-    otp = email_service.generate_otp()
-    expiry = email_service.calculate_otp_expiry()
+    # Clean and validate phone number
+    phone = request.phone.strip().replace(" ", "").replace("-", "")
+    if not phone or not phone.isdigit() or len(phone) < 10:
+        raise HTTPException(status_code=400, detail="Invalid phone number format")
 
     # Find or create user
     user = db.query(User).filter(User.phone == phone).first()
+    
+    # Rate Limiting: Check if OTP was sent very recently (within last 2 minutes)
+    if user and user.otp_expires_at:
+        # OTP_EXPIRY is usually 10 mins. If expires_at is > 8 mins from now, it was sent < 2 mins ago
+        now = datetime.utcnow()
+        if user.otp_expires_at > (now + timedelta(minutes=settings.OTP_EXPIRY_MINUTES - 2)):
+            wait_time = int((user.otp_expires_at - (now + timedelta(minutes=settings.OTP_EXPIRY_MINUTES - 2))).total_seconds())
+            raise HTTPException(
+                status_code=429, 
+                detail=f"Please wait {wait_time} seconds before requesting a new OTP."
+            )
+
+    # Generate OTP
+    otp = email_service.generate_otp()
+    expiry = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
+
     if not user:
         user = User(phone=phone)
         db.add(user)
@@ -146,7 +158,8 @@ async def send_whatsapp_otp(request: WhatsAppOTPRequest, db: Session = Depends(g
     db.commit()
 
     # MOCK: In production, integrate with WhatsApp API (e.g., Twilio, Meta)
-    print(f"\n[WHATSAPP MOCK] Sending OTP {otp} to {phone}\n")
+    # Using print for visibility in PM2 logs
+    print(f"\n[SECURITY] OTP {otp} generated for {phone} (Expires at: {expiry})\n")
     
     return {"message": "OTP sent successfully", "phone": phone}
 

@@ -34,10 +34,18 @@ async def submit_reward(
     upload_dir = f"{settings.UPLOAD_DIR}/rewards"
     os.makedirs(upload_dir, exist_ok=True)
     
-    # Save uploaded file
-    timestamp = int(datetime.now().timestamp())
-    file_extension = os.path.splitext(screenshot.filename)[1]
-    file_path = f"{upload_dir}/{timestamp}_{current_user.id}{file_extension}"
+    # Security: Validate file extension and sanitize filename
+    file_extension = os.path.splitext(screenshot.filename)[1].lower()
+    if file_extension not in ['.jpg', '.jpeg', '.png', '.webp']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid image format. Allowed: .jpg, .jpeg, .png, .webp"
+        )
+    
+    # Generate a completely random, secure filename
+    import uuid
+    safe_filename = f"{uuid.uuid4().hex}_{timestamp}{file_extension}"
+    file_path = f"{upload_dir}/{safe_filename}"
     
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(screenshot.file, buffer)

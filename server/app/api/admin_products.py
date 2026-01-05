@@ -280,7 +280,7 @@ async def get_product_qr_codes(product_id: int, db: Session = Depends(get_db), i
     return db.query(QRCode).filter(QRCode.product_id == product_id).all()
 
 @router.get("/products/{product_id}/qr-pdf")
-async def download_qr_pdf(product_id: int, db: Session = Depends(get_db)):
+async def download_qr_pdf(product_id: int, db: Session = Depends(get_db), is_admin: bool = Depends(verify_admin)):
     """Download existing QR codes as PDF"""
     from fastapi.responses import StreamingResponse
     from app.services.qr_service import qr_service

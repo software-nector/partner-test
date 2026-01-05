@@ -45,21 +45,15 @@ async def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db))
             detail="Not authorized as admin"
         )
     
-    # Find or create admin user
+    # Find admin user
     admin = db.query(User).filter(User.email == request.email).first()
     
     if not admin:
-        # Create admin user on first login
-        admin = User(
-            email=request.email,
-            phone="0000000000",  # Placeholder
-            name="Admin",
-            is_admin=True,
-            password_hash=ph.hash(request.password)
+        # Security: Do NOT auto-create admin anymore. Must be added via script.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Admin account not found. Please contact system administrator."
         )
-        db.add(admin)
-        db.commit()
-        db.refresh(admin)
     else:
         # Verify password with Argon2
         print(f"[DEBUG] Admin found: {admin.email}")
