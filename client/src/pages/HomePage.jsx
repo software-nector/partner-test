@@ -480,10 +480,21 @@ export default function HomePage() {
                                                     required
                                                     type="text"
                                                     value={cashbackForm.upiId}
-                                                    onChange={(e) => setCashbackForm({ ...cashbackForm, upiId: e.target.value })}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.toLowerCase().trim();
+                                                        setCashbackForm({ ...cashbackForm, upiId: val });
+                                                    }}
                                                     placeholder="your@upi"
-                                                    className="w-full bg-[#0f1729] border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-400 outline-none"
+                                                    className={`w-full bg-[#0f1729] border rounded-lg px-4 py-3 outline-none transition-all ${cashbackForm.upiId
+                                                            ? (/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(cashbackForm.upiId)
+                                                                ? 'border-emerald-500 focus:border-emerald-400'
+                                                                : 'border-rose-500 focus:border-rose-400')
+                                                            : 'border-gray-700 focus:border-cyan-400'
+                                                        }`}
                                                 />
+                                                {cashbackForm.upiId && !/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(cashbackForm.upiId) && (
+                                                    <p className="text-[10px] text-rose-500 mt-1 font-bold">Invalid UPI format (e.g. name@bank)</p>
+                                                )}
                                             </div>
                                         </div>
                                         <div>

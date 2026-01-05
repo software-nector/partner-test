@@ -29,6 +29,11 @@ async def submit_reward(
     current_user: User = Depends(get_current_user)
 ):
     """Submit a reward claim with review screenshot"""
+    # 0. Basic Input Validation
+    import re
+    upi_pattern = r"^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$"
+    if not re.match(upi_pattern, upi_id):
+        raise HTTPException(status_code=400, detail="Invalid UPI ID format. Use name@bank")
     
     # Create upload directory
     upload_dir = f"{settings.UPLOAD_DIR}/rewards"
