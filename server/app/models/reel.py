@@ -19,6 +19,8 @@ class Reel(Base):
     instagram_handle = Column(String(100), nullable=False)
     reel_url = Column(String(500), nullable=False)
     brand_tag_proof = Column(String(500), nullable=False)  # Screenshot path
+    image_hash = Column(String(64), unique=True, index=True, nullable=True)  # To prevent duplicates
+
     
     # Status
     status = Column(String(50), default="pending")  # pending, approved, rejected, shipped

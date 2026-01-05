@@ -22,6 +22,8 @@ class Reward(Base):
     platform_name = Column(String(50), nullable=True)  # Amazon, Flipkart, Meesho, etc.
     coupon_code = Column(String(50), nullable=True, index=True) # Linked QR code
     screenshot_quality = Column(String(20), nullable=True)  # AI analysis: excellent, good, fair, poor
+    image_hash = Column(String(64), unique=True, index=True, nullable=True)  # To prevent duplicates
+
     
     # Status
     status = Column(String(50), default="pending")  # pending, approved, rejected, paid

@@ -61,18 +61,25 @@ class AIAnalysisService:
             - Authorized Store Links:
             {urls_context}
             
-            INSTRUCTIONS:
+            INSTRUCTIONS (FORENSIC AUDIT):
             1. **Extract Reviewer Identity**: Find the name of the person who wrote the review.
             2. **Extract Unique Text Snippet**: Extract the first 2-3 sentences of the review text. 
             3. **Verify Product Match**: Does the product name in the screenshot match our "Authorized Name"? Look for "Purna" keyword.
             4. **Verify Rating**: Is it a 5-star review?
-            5. **Verify Marketplace**: Is it from Amazon, Flipkart, Meesho, Myntra, Nykaa, JioMart, or any other e-commerce platform?
-            6. **Search Matching**: If you were to search this text on the marketplace, would it be a clear match?
+            5. **Verify Marketplace**: Is it from Amazon, Flipkart, Meesho, Myntra, Nykaa, or JioMart?
+            
+            6. **FORGERY DETECTION (CRITICAL)**: 
+               - Look for "Photoshop" or editing markers. 
+               - Check if the font of the Reviewer Name or Review Text looks different from the rest of the UI.
+               - Check for inconsistent lighting or blurry edges around the text.
+               - If the text looks "pasted" or the alignment is slightly off, flag it as fraudulent.
+            
+            7. **Search Matching**: If you were to search this text on the marketplace, would it be a clear match?
             
             SAFETY NET LOGIC:
-            - If you are 100% CONFIDENT (Product Match + 5 Stars + On-Platform Match), set auto_approve to true.
-            - If you are UNSURE, or the text is hard to read, or the link match is not perfect, set auto_approve to false. 
-            **DO NOT REJECT IF UNSURE; instead, set auto_approve to false so a Human Admin can check.**
+            - If you see ANY sign of digital editing or font mismatch, set is_match to false and auto_approve to false.
+            - If you are 100% CONFIDENT (Product Match + 5 Stars + Authentic App UI + No Forgery Signs), set auto_approve to true.
+            - If you are UNSURE, set auto_approve to false so a Human Admin can check.
             
             Return your response in this JSON format:
             {{
@@ -83,7 +90,8 @@ class AIAnalysisService:
                 "detected_rating": 5,
                 "detected_platform": "Amazon",
                 "is_verified_badge_present": true,
-                "decision_reasoning": "Explain your decision. If auto_approve is false, tell the Admin what to look for."
+                "is_edited_or_fake": false,
+                "decision_reasoning": "Forensic reasoning. Must mention if fonts/UI look authentic or edited."
             }}
             """
             

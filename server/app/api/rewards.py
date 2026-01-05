@@ -47,8 +47,22 @@ async def submit_reward(
     safe_filename = f"{uuid.uuid4().hex}_{timestamp}{file_extension}"
     file_path = f"{upload_dir}/{safe_filename}"
     
+    # Calculate Image Hash to prevent duplicates
+    import hashlib
+    file_content = screenshot.file.read()
+    screenshot.file.seek(0) # Reset file pointer for saving
+    image_hash = hashlib.sha256(file_content).hexdigest()
+    
+    # Check if this exact image has been used before
+    existing_reward = db.query(Reward).filter(Reward.image_hash == image_hash).first()
+    if existing_reward:
+        raise HTTPException(
+            status_code=400, 
+            detail="This screenshot has already been used for another claim. Duplicates are not allowed."
+        )
+
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(screenshot.file, buffer)
+        buffer.write(file_content)
     
     # Fetch Product Data for AI Context
     qr = db.query(QRCode).filter(QRCode.code == coupon_code.upper()).first()
@@ -162,6 +176,7 @@ async def submit_reward(
         upi_id=upi_id,
         payment_amount=product.cashback_amount or 100.0,
         status=reward_status,
+        image_hash=image_hash,
         # AI Fields
         ai_verified=ai_verified,
         is_auto_approved=is_auto_approved,

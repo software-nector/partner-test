@@ -51,8 +51,23 @@ async def submit_reel(
     safe_filename = f"{uuid.uuid4().hex}_{timestamp}{file_extension}"
     file_path = f"{upload_dir}/{safe_filename}"
     
+    # Calculate Image Hash to prevent duplicates
+    import hashlib
+    file_content = screenshot.file.read()
+    screenshot.file.seek(0) # Reset file pointer for saving
+    image_hash = hashlib.sha256(file_content).hexdigest()
+    
+    # Check if this exact image has been used before
+    import app.models.reel as reel_model
+    existing_reel = db.query(reel_model.Reel).filter(reel_model.Reel.image_hash == image_hash).first()
+    if existing_reel:
+        raise HTTPException(
+            status_code=400, 
+            detail="This proof screenshot has already been used for another claim. Duplicates are not allowed."
+        )
+
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(screenshot.file, buffer)
+        buffer.write(file_content)
     
     # Create reel record
     # 3. Upload to Google Drive (if local save passed)
@@ -79,6 +94,7 @@ async def submit_reel(
         instagram_handle=instagram_username,
         reel_url=reel_url,
         brand_tag_proof=drive_link,
+        image_hash=image_hash,
         product_name=product_name,
         status="pending"
     )

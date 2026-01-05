@@ -270,6 +270,16 @@ export default function RewardsList() {
                                             <span>{reward.admin_notes}</span>
                                         </div>
                                     )}
+
+                                    {reward.ai_decision_log && (
+                                        <div className={`flex gap-2 items-start text-[10px] font-bold p-4 rounded-xl border ${reward.is_auto_approved ? 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10' : 'text-blue-400 bg-blue-500/5 border-blue-500/10'}`}>
+                                            <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+                                            <div className="space-y-1">
+                                                <div className="uppercase tracking-widest opacity-60">AI Intelligence Audit</div>
+                                                <div className="normal-case leading-relaxed">{reward.ai_decision_log}</div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Review Verification Visuals */}

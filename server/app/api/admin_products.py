@@ -102,12 +102,22 @@ async def generate_qr_for_product(product_id: int, db: Session = Depends(get_db)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
         
-    # Generate unique code
-    unique_code = str(uuid.uuid4())[:6].upper()  # 6 characters, uppercase
+    # Generate unique secure code (looks encrypted)
+    import hashlib
+    sku = (product.sku_prefix or "QR").upper()
+    # Get next serial for this product
+    last_qr = db.query(QRCode).filter(QRCode.product_id == product_id).order_by(QRCode.serial_number.desc()).first()
+    next_serial = (last_qr.serial_number + 1) if last_qr and last_qr.serial_number else 1
+    
+    salt = uuid.uuid4().hex[:8]
+    raw_seed = f"{sku}-{next_serial}-{salt}"
+    unique_code = hashlib.sha256(raw_seed.encode()).hexdigest()[:12].upper()
+    
     while db.query(QRCode).filter(QRCode.code == unique_code).first():
-        unique_code = str(uuid.uuid4())[:6].upper()
+        salt = uuid.uuid4().hex[:8]
+        unique_code = hashlib.sha256(f"{sku}-{next_serial}-{salt}".encode()).hexdigest()[:12].upper()
         
-    db_qr = QRCode(product_id=product_id, code=unique_code)
+    db_qr = QRCode(product_id=product_id, code=unique_code, serial_number=next_serial)
     db.add(db_qr)
     db.commit()
     db.refresh(db_qr)
@@ -127,12 +137,24 @@ async def generate_bulk_qr(product_id: int, quantity: int, db: Session = Depends
     
     # Generate multiple codes
     generated_codes = []
-    for _ in range(quantity):
-        unique_code = str(uuid.uuid4())[:6].upper()
-        while db.query(QRCode).filter(QRCode.code == unique_code).first():
-            unique_code = str(uuid.uuid4())[:6].upper()
+    sku = (product.sku_prefix or "QR").upper()
+    import hashlib
+    
+    # Get last serial number for this product
+    last_qr = db.query(QRCode).filter(QRCode.product_id == product_id).order_by(QRCode.serial_number.desc()).first()
+    serial_start = (last_qr.serial_number + 1) if last_qr and last_qr.serial_number else 1
+
+    for i in range(quantity):
+        current_serial = serial_start + i
+        salt = uuid.uuid4().hex[:8]
+        raw_seed = f"{sku}-{current_serial}-{salt}"
+        unique_code = hashlib.sha256(raw_seed.encode()).hexdigest()[:12].upper()
         
-        db_qr = QRCode(product_id=product_id, code=unique_code)
+        while db.query(QRCode).filter(QRCode.code == unique_code).first():
+            salt = uuid.uuid4().hex[:8]
+            unique_code = hashlib.sha256(f"{sku}-{current_serial}-{salt}".encode()).hexdigest()[:12].upper()
+        
+        db_qr = QRCode(product_id=product_id, code=unique_code, serial_number=current_serial)
         db.add(db_qr)
         generated_codes.append(db_qr)
     
@@ -197,15 +219,16 @@ async def generate_pdf_batch(product_id: int, quantity: int, db: Session = Depen
     generated_qr_objects = []
     base_url = settings.FRONTEND_URL.rstrip('/')
     sku = (product.sku_prefix or "QR").upper()
+    import hashlib
     
     for i in range(quantity):
         current_serial = serial_start + i
-        # Format: SKU-SERIAL (e.g. APG-001) with padding
-        display_code = f"{sku}-{str(current_serial).zfill(3)}"
         
-        # Unique secret for verification (prevents guessing next serial easily)
-        secret = str(uuid.uuid4())[:4].upper()
-        unique_validator = f"{display_code}-{secret}"
+        # Security: Create an Opaque Token (looks encrypted) instead of SKU-SERIAL
+        # This makes it impossible for users to guess the next code
+        salt = uuid.uuid4().hex[:8]
+        raw_seed = f"{sku}-{current_serial}-{salt}"
+        unique_validator = hashlib.sha256(raw_seed.encode()).hexdigest()[:12].upper()
         
         db_qr = QRCode(
             product_id=product_id, 
