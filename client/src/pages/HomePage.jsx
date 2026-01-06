@@ -38,14 +38,16 @@ export default function HomePage() {
 
     // URL Parameter & Navigation State handling
     useEffect(() => {
+        // Privacy: Check session storage first (set by ProductDetails redirect)
+        const sessionCode = sessionStorage.getItem('scanned_code');
         const params = new URLSearchParams(window.location.search)
-        const code = params.get('code')
+        const urlCode = params.get('code')
         const stateCode = location.state?.qrCode
-        const claimMode = params.get('claim') === 'true'
-        const autoOpen = location.state?.autoOpenReward || claimMode
 
-        if (code || stateCode) {
-            const finalCode = (code || stateCode).toUpperCase()
+        const finalCode = (sessionCode || urlCode || stateCode)?.toUpperCase()
+        const autoOpen = location.state?.autoOpenReward || params.get('claim') === 'true'
+
+        if (finalCode) {
             setLoginForm(prev => ({ ...prev, coupon: finalCode }))
             setCashbackForm(prev => ({ ...prev, couponCode: finalCode }))
 
@@ -56,14 +58,28 @@ export default function HomePage() {
                     setShowLoginModal(true)
                 }
             }
+
+            // Clear session storage once consumed to keep it clean
+            // sessionStorage.removeItem('scanned_code'); 
         }
     }, [location.search, location.state, isAuthenticated])
 
-    const getDetectedProduct = () => {
-        if (!cashbackForm.couponCode) return null
-        const prefix = cashbackForm.couponCode.split('-')[0].toUpperCase()
-        return products.find(p => p.sku_prefix?.toUpperCase() === prefix)
-    }
+    const [detectedProduct, setDetectedProduct] = useState(null)
+
+    useEffect(() => {
+        const fetchDetectedProduct = async () => {
+            if (!cashbackForm.couponCode) return
+            try {
+                // Fetch product info from backend using the code
+                const response = await api.get(`/qr/${cashbackForm.couponCode}`)
+                setDetectedProduct(response.data)
+            } catch (error) {
+                console.error('Failed to resolve QR product:', error)
+                setDetectedProduct(null)
+            }
+        }
+        fetchDetectedProduct()
+    }, [cashbackForm.couponCode])
 
     useEffect(() => {
         const init = async () => {
@@ -486,10 +502,10 @@ export default function HomePage() {
                                                     }}
                                                     placeholder="your@upi"
                                                     className={`w-full bg-[#0f1729] border rounded-lg px-4 py-3 outline-none transition-all ${cashbackForm.upiId
-                                                            ? (/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(cashbackForm.upiId)
-                                                                ? 'border-emerald-500 focus:border-emerald-400'
-                                                                : 'border-rose-500 focus:border-rose-400')
-                                                            : 'border-gray-700 focus:border-cyan-400'
+                                                        ? (/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(cashbackForm.upiId)
+                                                            ? 'border-emerald-500 focus:border-emerald-400'
+                                                            : 'border-rose-500 focus:border-rose-400')
+                                                        : 'border-gray-700 focus:border-cyan-400'
                                                         }`}
                                                 />
                                                 {cashbackForm.upiId && !/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(cashbackForm.upiId) && (
@@ -500,9 +516,9 @@ export default function HomePage() {
                                         <div>
                                             <div className="flex justify-between items-center mb-2">
                                                 <label className="block text-sm font-semibold">Coupon Code</label>
-                                                {getDetectedProduct() && (
+                                                {detectedProduct && (
                                                     <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-wider">
-                                                        Product: {getDetectedProduct().name}
+                                                        Product: {detectedProduct.name}
                                                     </span>
                                                 )}
                                             </div>

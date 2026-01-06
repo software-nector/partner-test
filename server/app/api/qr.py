@@ -19,6 +19,9 @@ async def resolve_qr_code(code: str, db: Session = Depends(get_db)):
     if not qr:
         raise HTTPException(status_code=404, detail="Invalid QR code")
     
+    if qr.is_used:
+        raise HTTPException(status_code=400, detail="This QR code has already been used and claimed.")
+    
     # Increment scan count
     qr.scan_count += 1
     qr.last_scanned_at = datetime.utcnow()

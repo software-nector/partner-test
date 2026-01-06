@@ -65,6 +65,13 @@ async def update_reward_status(
         reward.verified_at = datetime.utcnow()
     elif update.status == "paid":
         reward.payment_date = datetime.utcnow()
+    elif update.status == "rejected":
+        # Free up the QR code so the user (or someone else if it was a mistake) can try again
+        from app.models.qr_code import QRCode
+        qr = db.query(QRCode).filter(QRCode.code == reward.coupon_code).first()
+        if qr:
+            qr.is_used = False
+            print(f"🔓 QR Code {qr.code} freed due to rejection of Reward #{reward.id}")
     
     db.commit()
     db.refresh(reward)

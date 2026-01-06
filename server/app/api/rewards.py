@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Request
 from sqlalchemy.orm import Session
 from typing import List
 import shutil
@@ -25,6 +25,7 @@ async def submit_reward(
     upi_id: str = Form(...),
     coupon_code: str = Form(...),
     screenshot: UploadFile = File(...),
+    request: Request = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -34,6 +35,17 @@ async def submit_reward(
     upi_pattern = r"^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$"
     if not re.match(upi_pattern, upi_id):
         raise HTTPException(status_code=400, detail="Invalid UPI ID format. Use name@bank")
+    
+    # Check if this UPI is already used by ANOTHER user (Identity Fraud Check)
+    existing_vpa = db.query(Reward).filter(Reward.upi_id == upi_id, Reward.user_id != current_user.id).first()
+    if existing_vpa:
+        raise HTTPException(
+            status_code=400, 
+            detail="This UPI ID is already linked to another user's claim. Please use your own UPI."
+        )
+    
+    # Get User IP
+    client_ip = request.client.host if request and request.client else "unknown"
     
     # Create upload directory
     upload_dir = f"{settings.UPLOAD_DIR}/rewards"
@@ -182,6 +194,7 @@ async def submit_reward(
         payment_amount=product.cashback_amount or 100.0,
         status=reward_status,
         image_hash=image_hash,
+        user_ip=client_ip,
         # AI Fields
         ai_verified=ai_verified,
         is_auto_approved=is_auto_approved,

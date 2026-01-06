@@ -23,6 +23,8 @@ class Reward(Base):
     coupon_code = Column(String(50), nullable=True, index=True) # Linked QR code
     screenshot_quality = Column(String(20), nullable=True)  # AI analysis: excellent, good, fair, poor
     image_hash = Column(String(64), unique=True, index=True, nullable=True)  # To prevent duplicates
+    user_ip = Column(String(45), nullable=True)  # To track fraud from same device/network
+
 
     
     # Status

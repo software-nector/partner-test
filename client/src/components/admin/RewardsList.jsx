@@ -6,7 +6,7 @@ import {
     Award, Clock, CheckCircle, XCircle, Banknote,
     Filter, Search, ArrowRight, CornerDownRight,
     DollarSign, Eye, Download, ExternalLink, ShieldCheck,
-    ChevronRight, CreditCard, Activity, Calendar
+    ChevronRight, CreditCard, Activity, Calendar, AlertTriangle
 } from 'lucide-react'
 
 export default function RewardsList() {
@@ -113,6 +113,15 @@ export default function RewardsList() {
             case 'paid': return <Banknote size={12} />
             default: return <Activity size={12} />
         }
+    }
+
+    const getSuspiciousReason = (reward) => {
+        if (!reward.user_ip || reward.user_ip === 'unknown') return null;
+        const matches = rewards.filter(r => r.user_ip === reward.user_ip && r.user_id !== reward.user_id);
+        if (matches.length > 0) {
+            return `Suspicious: ${matches.length + 1} accounts from this IP (${reward.user_ip})`;
+        }
+        return null;
     }
 
     const filters = [
@@ -241,9 +250,18 @@ export default function RewardsList() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${getStatusBadge(reward.status)}`}>
-                                            {getStatusIcon(reward.status)}
-                                            {reward.status}
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${getStatusBadge(reward.status)}`}>
+                                                {getStatusIcon(reward.status)}
+                                                {reward.status}
+                                            </div>
+
+                                            {getSuspiciousReason(reward) && (
+                                                <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-600 text-white border border-rose-600 flex items-center gap-1.5 animate-pulse">
+                                                    <AlertTriangle size={12} />
+                                                    {getSuspiciousReason(reward)}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

@@ -15,10 +15,11 @@ export default function ProductDetails() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Immediate redirect to homepage with QR code parameters
-        // This bypasses this page entirely as requested
+        // Privacy: Extract code, save to session, and wipe from URL immediately
         if (qrCode) {
-            navigate(`/?code=${qrCode}&claim=true`, { replace: true });
+            sessionStorage.setItem('scanned_code', qrCode);
+            // Redirect to a CLEAN URL (no query params)
+            navigate('/', { replace: true, state: { autoOpenReward: true } });
         } else {
             navigate('/', { replace: true });
         }
