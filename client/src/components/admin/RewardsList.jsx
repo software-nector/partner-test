@@ -6,7 +6,7 @@ import {
     Award, Clock, CheckCircle, XCircle, Banknote,
     Filter, Search, ArrowRight, CornerDownRight,
     DollarSign, Eye, Download, ExternalLink, ShieldCheck,
-    ChevronRight, CreditCard, Activity, Calendar, AlertTriangle
+    ChevronRight, CreditCard, Activity, Calendar, AlertTriangle, Info
 } from 'lucide-react'
 
 export default function RewardsList() {
@@ -240,7 +240,7 @@ export default function RewardsList() {
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-slate-300 border border-white/5 uppercase">
-                                                {reward.name[0]}
+                                                {reward.name ? reward.name[0] : 'U'}
                                             </div>
                                             <div>
                                                 <h3 className="text-lg font-bold text-white tracking-tight leading-tight">{reward.name}</h3>
