@@ -37,7 +37,7 @@ async def get_all_rewards(
     if status:
         query = query.filter(Reward.status == status)
     
-    rewards = query.offset(skip).limit(limit).all()
+    rewards = query.order_by(Reward.created_at.desc()).offset(skip).limit(limit).all()
     return [RewardResponse.model_validate(r) for r in rewards]
 
 @router.put("/rewards/{reward_id}", response_model=RewardResponse)
@@ -92,7 +92,7 @@ async def get_all_reels(
     if status:
         query = query.filter(Reel.status == status)
     
-    reels = query.offset(skip).limit(limit).all()
+    reels = query.order_by(Reel.created_at.desc()).offset(skip).limit(limit).all()
     return [ReelResponse.model_validate(r) for r in reels]
 
 @router.put("/reels/{reel_id}", response_model=ReelResponse)

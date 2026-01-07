@@ -219,39 +219,39 @@ export default function RewardsList() {
                     {rewards.map((reward, idx) => (
                         <motion.div
                             key={reward.id}
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            className={`group bg-[#0b1022] p-6 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all ${selectedRewards.includes(reward.id) ? 'border-blue-500/50 bg-blue-500/5' : ''}`}
+                            transition={{ delay: idx * 0.03 }}
+                            className={`group bg-[#0b1022] p-4 rounded-[1.5rem] border border-white/5 hover:border-blue-500/30 transition-all ${selectedRewards.includes(reward.id) ? 'border-blue-500/50 bg-blue-500/5' : ''}`}
                         >
                             <div className="flex flex-col lg:flex-row gap-8 items-start">
                                 {/* Checklist Circle */}
                                 {reward.status === 'approved' && (
                                     <button
                                         onClick={() => toggleRewardSelection(reward.id)}
-                                        className={`w-10 h-10 rounded-2xl flex items-center justify-center border transition-all ${selectedRewards.includes(reward.id) ? 'bg-blue-600 border-blue-600' : 'bg-white/5 border-white/5 hover:border-blue-500/30'}`}
+                                        className={`w-8 h-8 shrink-0 rounded-xl flex items-center justify-center border transition-all ${selectedRewards.includes(reward.id) ? 'bg-blue-600 border-blue-600' : 'bg-white/5 border-white/5 hover:border-blue-500/30'}`}
                                     >
-                                        <CheckCircle size={18} className={selectedRewards.includes(reward.id) ? 'text-white' : 'text-slate-700'} />
+                                        <CheckCircle size={16} className={selectedRewards.includes(reward.id) ? 'text-white' : 'text-slate-700'} />
                                     </button>
                                 )}
 
                                 {/* Main Audit Content */}
-                                <div className="flex-1 space-y-6">
+                                <div className="flex-1 space-y-4">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-slate-300 border border-white/5 uppercase">
+                                            <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center font-black text-slate-300 border border-white/5 uppercase text-sm">
                                                 {reward.name ? reward.name[0] : 'U'}
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-white tracking-tight leading-tight">{reward.name || 'Anonymous User'}</h3>
-                                                <div className="flex items-center gap-4 text-[10px] font-bold text-slate-600 mt-1">
-                                                    <span className="flex items-center gap-1"><CreditCard size={10} /> {reward.phone || 'No Phone'}</span>
-                                                    <span className="flex items-center gap-1 uppercase tracking-widest"><Calendar size={10} /> {reward.purchase_date ? new Date(reward.purchase_date).toLocaleDateString() : 'N/A'}</span>
+                                                <h3 className="text-base font-bold text-white tracking-tight leading-tight">{reward.name || 'Anonymous User'}</h3>
+                                                <div className="flex items-center gap-3 text-[9px] font-bold text-slate-600 mt-0.5">
+                                                    <span className="flex items-center gap-1"><CreditCard size={9} /> {reward.phone || 'No Phone'}</span>
+                                                    <span className="flex items-center gap-1 uppercase tracking-widest"><Calendar size={9} /> {reward.purchase_date ? new Date(reward.purchase_date).toLocaleDateString() : 'N/A'}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${getStatusBadge(reward.status)}`}>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                            <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center gap-1 ${getStatusBadge(reward.status)}`}>
                                                 {getStatusIcon(reward.status)}
                                                 {reward.status}
                                             </div>
@@ -265,19 +265,19 @@ export default function RewardsList() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-white/[0.02] rounded-xl border border-white/5">
                                         <div>
-                                            <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Product Audit</div>
-                                            <div className="text-xs font-bold text-slate-200 line-clamp-1">{reward.product_name || 'N/A'}</div>
+                                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Product Audit</div>
+                                            <div className="text-[11px] font-bold text-slate-200 line-clamp-1">{reward.product_name || 'N/A'}</div>
                                         </div>
                                         <div>
-                                            <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Platform</div>
-                                            <div className="text-xs font-bold text-blue-400 capitalize flex items-center gap-1">
+                                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Platform</div>
+                                            <div className="text-[11px] font-bold text-blue-400 capitalize flex items-center gap-1">
                                                 <ExternalLink size={10} /> {reward.platform_name || 'Generic Purchase'}
                                             </div>
                                         </div>
                                         <div>
-                                            <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Payout Detail</div>
+                                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Payout Detail</div>
                                             <div className="text-sm font-black text-emerald-500">₹{reward.payment_amount || 100}</div>
                                         </div>
                                     </div>
@@ -290,18 +290,18 @@ export default function RewardsList() {
                                     )}
 
                                     {reward.ai_decision_log && (
-                                        <div className={`flex gap-2 items-start text-[10px] font-bold p-4 rounded-xl border ${reward.is_auto_approved ? 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10' : 'text-blue-400 bg-blue-500/5 border-blue-500/10'}`}>
-                                            <ShieldCheck size={14} className="mt-0.5 shrink-0" />
-                                            <div className="space-y-1">
+                                        <div className={`flex gap-2 items-start text-[9px] font-bold p-3 rounded-xl border ${reward.is_auto_approved ? 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10' : 'text-blue-400 bg-blue-500/5 border-blue-500/10'}`}>
+                                            <ShieldCheck size={12} className="mt-0.5 shrink-0" />
+                                            <div className="space-y-0.5">
                                                 <div className="uppercase tracking-widest opacity-60">AI Intelligence Audit</div>
-                                                <div className="normal-case leading-relaxed">{reward.ai_decision_log}</div>
+                                                <div className="normal-case leading-relaxed line-clamp-2 md:line-clamp-none">{reward.ai_decision_log}</div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Review Verification Visuals */}
-                                <div className="w-full lg:w-48 space-y-4">
+                                <div className="w-full lg:w-40 space-y-3 shrink-0">
                                     <div
                                         onClick={() => {
                                             setSelectedImage(reward.review_screenshot)

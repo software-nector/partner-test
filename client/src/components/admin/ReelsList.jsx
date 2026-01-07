@@ -113,18 +113,18 @@ export default function ReelsList() {
             </header>
 
             {/* Performance Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                    { label: 'Total Content', value: reels.length, icon: <Film size={18} />, color: 'text-purple-400' },
-                    { label: 'Awaiting Audit', value: reels.filter(r => r.status === 'pending').length, icon: <Clock size={18} />, color: 'text-amber-400' },
-                    { label: 'Verified Creators', value: reels.filter(r => r.status === 'approved' || r.status === 'shipped').length, icon: <CheckCircle size={18} />, color: 'text-emerald-400' },
-                    { label: 'Dispatched Gifts', value: reels.filter(r => r.status === 'shipped').length, icon: <Truck size={18} />, color: 'text-blue-400' },
+                    { label: 'Total Content', value: reels.length, icon: <Film size={16} />, color: 'text-purple-400' },
+                    { label: 'Awaiting Audit', value: reels.filter(r => r.status === 'pending').length, icon: <Clock size={16} />, color: 'text-amber-400' },
+                    { label: 'Verified Creators', value: reels.filter(r => r.status === 'approved' || r.status === 'shipped').length, icon: <CheckCircle size={16} />, color: 'text-emerald-400' },
+                    { label: 'Dispatched Gifts', value: reels.filter(r => r.status === 'shipped').length, icon: <Truck size={16} />, color: 'text-blue-400' },
                 ].map((s, i) => (
-                    <div key={i} className="bg-[#0b1022] p-5 rounded-[1.5rem] border border-white/5 flex items-center gap-4">
-                        <div className={`p-3 rounded-xl bg-white/5 border border-white/5 ${s.color}`}>{s.icon}</div>
+                    <div key={i} className="bg-[#0b1022] p-4 rounded-[1.2rem] border border-white/5 flex items-center gap-3">
+                        <div className={`p-2.5 rounded-lg bg-white/5 border border-white/5 ${s.color}`}>{s.icon}</div>
                         <div>
-                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">{s.label}</div>
-                            <div className="text-xl font-black text-white">{s.value}</div>
+                            <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">{s.label}</div>
+                            <div className="text-lg font-black text-white">{s.value}</div>
                         </div>
                     </div>
                 ))}
@@ -145,25 +145,25 @@ export default function ReelsList() {
                     {reels.map((reel, idx) => (
                         <motion.div
                             key={reel.id}
-                            initial={{ opacity: 0, y: 30 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            className="group bg-[#0b1022] rounded-[2.5rem] border border-white/5 hover:border-purple-500/30 transition-all overflow-hidden flex flex-col md:flex-row shadow-2xl"
+                            transition={{ delay: idx * 0.03 }}
+                            className="group bg-[#0b1022] rounded-[1.5rem] border border-white/5 hover:border-purple-500/30 transition-all overflow-hidden flex flex-col md:flex-row shadow-xl"
                         >
                             {/* Visual Preview Section */}
-                            <div className="w-full md:w-56 h-72 md:h-auto bg-slate-900 relative group/preview overflow-hidden">
+                            <div className="w-full md:w-44 h-56 md:h-auto bg-slate-900 relative group/preview overflow-hidden shrink-0">
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
                                 <div className="absolute inset-0 flex items-center justify-center z-20">
                                     <button
                                         onClick={() => window.open(reel.reel_url, '_blank')}
-                                        className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white scale-90 opacity-0 group-hover/preview:scale-100 group-hover/preview:opacity-100 transition-all border border-white/20"
+                                        className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white scale-90 opacity-0 group-hover/preview:scale-100 group-hover/preview:opacity-100 transition-all border border-white/20"
                                     >
-                                        <Play fill="white" size={20} className="ml-1" />
+                                        <Play fill="white" size={16} className="ml-1" />
                                     </button>
                                 </div>
-                                <div className="absolute bottom-6 left-6 z-20">
-                                    <div className="flex items-center gap-2 text-white font-black text-xs italic uppercase tracking-tighter">
-                                        <Instagram size={14} className="text-pink-500" />
+                                <div className="absolute bottom-4 left-4 z-20">
+                                    <div className="flex items-center gap-1.5 text-white font-black text-[10px] italic uppercase tracking-tighter">
+                                        <Instagram size={12} className="text-pink-500" />
                                         @{reel.social_username}
                                     </div>
                                 </div>
@@ -176,29 +176,29 @@ export default function ReelsList() {
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-purple-900/40 to-slate-900 flex items-center justify-center text-slate-700">
-                                        <Film size={48} />
+                                        <Film size={32} />
                                     </div>
                                 )}
                             </div>
 
                             {/* Creator Content Section */}
-                            <div className="flex-1 p-8 space-y-6 flex flex-col justify-between">
-                                <div className="space-y-4">
+                            <div className="flex-1 p-5 space-y-4 flex flex-col justify-between">
+                                <div className="space-y-3">
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <h3 className="text-xl font-bold text-white tracking-tight leading-none mb-1">{reel.name}</h3>
-                                            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{reel.phone}</div>
+                                            <h3 className="text-lg font-bold text-white tracking-tight leading-none mb-1">{reel.name}</h3>
+                                            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">{reel.phone}</div>
                                         </div>
-                                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border flex items-center gap-1.5 ${getStatusBadge(reel.status)}`}>
-                                            <div className={`w-1.5 h-1.5 rounded-full ${reel.status === 'shipped' ? 'bg-blue-500' : 'bg-current'} animate-pulse`} />
+                                        <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.15em] border flex items-center gap-1 ${getStatusBadge(reel.status)}`}>
+                                            <div className={`w-1 h-1 rounded-full ${reel.status === 'shipped' ? 'bg-blue-500' : 'bg-current'} animate-pulse`} />
                                             {reel.status}
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3">
-                                        <div className="flex gap-3 items-start p-4 bg-white/[0.02] rounded-2xl border border-white/5">
-                                            <MapPin size={16} className="text-slate-700 mt-1 shrink-0" />
-                                            <div className="text-xs font-medium text-slate-400 line-clamp-2 leading-relaxed">{reel.address}</div>
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2 items-start p-3 bg-white/[0.02] rounded-xl border border-white/5">
+                                            <MapPin size={14} className="text-slate-700 mt-0.5 shrink-0" />
+                                            <div className="text-[11px] font-medium text-slate-400 line-clamp-1 leading-relaxed">{reel.address}</div>
                                         </div>
 
                                         {reel.tracking_number && (
@@ -209,20 +209,20 @@ export default function ReelsList() {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
+                                <div className="flex gap-2 pt-2">
                                     {reel.status === 'pending' && (
                                         <>
                                             <button
                                                 onClick={() => handleStatusUpdate(reel.id, 'approved')}
-                                                className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl hover:bg-emerald-500 transition-all"
+                                                className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg hover:bg-emerald-500 transition-all"
                                             >
-                                                Verify Creator
+                                                Verify
                                             </button>
                                             <button
                                                 onClick={() => handleStatusUpdate(reel.id, 'rejected')}
-                                                className="px-6 py-4 bg-white/5 text-slate-600 rounded-2xl transition hover:bg-rose-600 hover:text-white"
+                                                className="px-4 py-3 bg-white/5 text-slate-600 rounded-xl transition hover:bg-rose-600 hover:text-white"
                                             >
-                                                <XCircle size={16} />
+                                                <XCircle size={14} />
                                             </button>
                                         </>
                                     )}
@@ -230,24 +230,24 @@ export default function ReelsList() {
                                     {reel.status === 'approved' && (
                                         <button
                                             onClick={() => { setSelectedReel(reel); setShowModal(true) }}
-                                            className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center justify-center gap-3 transition-all"
+                                            className="flex-1 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg flex items-center justify-center gap-2 transition-all"
                                         >
-                                            <Package size={16} /> Mark Dispatch
+                                            <Package size={14} /> Dispatch
                                         </button>
                                     )}
 
                                     {reel.status === 'shipped' && (
-                                        <div className="w-full py-4 bg-white/[0.03] border border-white/5 text-slate-600 rounded-2xl text-[10px] font-black uppercase text-center flex items-center justify-center gap-2">
-                                            <CheckCircle size={12} className="text-emerald-500" /> Fulfilled
+                                        <div className="w-full py-3 bg-white/[0.03] border border-white/5 text-slate-600 rounded-xl text-[10px] font-black uppercase text-center flex items-center justify-center gap-2">
+                                            <CheckCircle size={10} className="text-emerald-500" /> Fulfilled
                                         </div>
                                     )}
 
                                     {reel.brand_tag_proof && (
                                         <button
                                             onClick={() => { setSelectedImage(reel.brand_tag_proof); setShowImageModal(true) }}
-                                            className="p-4 bg-white/5 border border-white/5 rounded-2xl text-slate-500 hover:text-white transition-all shadow-xl"
+                                            className="p-3 bg-white/5 border border-white/5 rounded-xl text-slate-500 hover:text-white transition-all shadow-lg"
                                         >
-                                            <Eye size={18} />
+                                            <Eye size={14} />
                                         </button>
                                     )}
                                 </div>
