@@ -242,7 +242,7 @@ async def generate_pdf_batch(product_id: int, quantity: int, db: Session = Depen
     db.commit()
     
     # 3. Prepare data for PDF
-    qr_data = [(qr.code, f"{base_url}/p/{qr.code}") for qr in generated_qr_objects]
+    qr_data = [(qr.code, f"{base_url}/p/{qr.code}", f"{sku}-{qr.serial_number:02d}") for qr in generated_qr_objects]
     
     # 4. Generate PDF in memory (RAM)
     batch_info = {

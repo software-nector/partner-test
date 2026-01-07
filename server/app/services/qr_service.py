@@ -39,8 +39,8 @@ class QRCodeService:
             border=4,
         )
         
-        # Add data (Direct Claim URL on Homepage)
-        url = f"{self.base_url}/?code={code}&claim=true"
+        # Add data (Privacy-focused path /p/)
+        url = f"{self.base_url}/p/{code}"
         qr.add_data(url)
         qr.make(fit=True)
         
@@ -56,7 +56,7 @@ class QRCodeService:
     
     def generate_bulk_pdf(
         self, 
-        qr_codes: List[Tuple[str, str]], 
+        qr_codes: List[Tuple[str, str, str]], 
         product_name: str,
         batch_info: dict = None,
         cols: int = 4,
@@ -107,10 +107,7 @@ class QRCodeService:
             end_idx = min(start_idx + codes_per_page, len(qr_codes))
             
             for idx in range(start_idx, end_idx):
-                code, url = qr_codes[idx]
-                
-                # Split display code from secret (e.g. APG-001-ABCD -> APG-001)
-                display_code = "-".join(code.split("-")[:2]) if "-" in code else code
+                code, url, label = qr_codes[idx]
                 
                 grid_idx = idx - start_idx
                 col = grid_idx % cols
@@ -119,24 +116,22 @@ class QRCodeService:
                 x = margin + (col * cell_width) + (cell_width - qr_size) / 2
                 y = height - margin - ((row + 1) * cell_height) + (cell_height - qr_size) / 2 + 5*mm
                 
+                # Draw "SCAN" above QR
+                c.setFont("Helvetica-Bold", 11)
+                c.drawCentredString(x + qr_size / 2, y + qr_size + 1*mm, "SCAN")
+                
                 # Draw QR image
                 qr_img = self.generate_qr_image(code)
                 c.drawImage(ImageReader(qr_img), x, y, width=qr_size, height=qr_size, preserveAspectRatio=True)
                 
-                # Draw Labels below QR
+                # Draw SKU-Serial below QR
                 text_y = y - 5*mm
+                c.setFont("Helvetica-Bold", 12)
+                c.drawCentredString(x + qr_size / 2, text_y, label)
                 
-                # Mini Product Name (Helps sorters)
-                c.setFont("Helvetica-Bold", 7)
-                c.drawCentredString(x + qr_size / 2, text_y, product_name[:30] + ("..." if len(product_name) > 30 else ""))
-                
-                # Serial / SKU Code
-                c.setFont("Helvetica-Bold", 11)
-                c.drawCentredString(x + qr_size / 2, text_y - 5*mm, display_code)
-                
-                # Micro URL
-                c.setFont("Helvetica", 5)
-                c.drawCentredString(x + qr_size / 2, text_y - 8*mm, url)
+                # Optional: Product Name (very small at the bottom of the cell)
+                c.setFont("Helvetica", 6)
+                c.drawCentredString(x + qr_size / 2, text_y - 4*mm, product_name[:40] + ("..." if len(product_name) > 40 else ""))
         
         c.save()
         buffer.seek(0)
