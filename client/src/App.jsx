@@ -8,7 +8,10 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
 const NavigateToHome = () => {
     const { qrCode } = useParams()
-    return <Navigate to={`/?code=${qrCode}&claim=true`} replace />
+    if (qrCode) {
+        sessionStorage.setItem('scanned_code', qrCode.toUpperCase());
+    }
+    return <Navigate to="/" replace state={{ autoOpenReward: true }} />
 }
 
 function App() {

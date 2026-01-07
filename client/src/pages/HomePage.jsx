@@ -38,29 +38,31 @@ export default function HomePage() {
 
     // URL Parameter & Navigation State handling
     useEffect(() => {
-        // Privacy: Check session storage first (set by ProductDetails redirect)
+        // Privacy: Check session storage first (set by App.jsx or ProductDetails redirect)
         const sessionCode = sessionStorage.getItem('scanned_code');
-        const params = new URLSearchParams(window.location.search)
-        const urlCode = params.get('code')
-        const stateCode = location.state?.qrCode
+        const params = new URLSearchParams(window.location.search);
+        const urlCode = params.get('code');
+        const stateCode = location.state?.qrCode;
 
-        const finalCode = (sessionCode || urlCode || stateCode)?.toUpperCase()
-        const autoOpen = location.state?.autoOpenReward || params.get('claim') === 'true'
+        const finalCode = (sessionCode || urlCode || stateCode)?.toUpperCase();
+        const autoOpen = location.state?.autoOpenReward || params.get('claim') === 'true';
 
         if (finalCode) {
-            setLoginForm(prev => ({ ...prev, coupon: finalCode }))
-            setCashbackForm(prev => ({ ...prev, couponCode: finalCode }))
+            setLoginForm(prev => ({ ...prev, coupon: finalCode }));
+            setCashbackForm(prev => ({ ...prev, couponCode: finalCode }));
 
             if (autoOpen) {
                 if (isAuthenticated) {
-                    setActiveSection('claims')
+                    setActiveSection('claims');
                 } else {
-                    setShowLoginModal(true)
+                    setShowLoginModal(true);
                 }
             }
 
-            // Clear session storage once consumed to keep it clean
-            // sessionStorage.removeItem('scanned_code'); 
+            // SECURITY: Wipe the URL address bar immediately if parameters are present
+            if (window.location.search) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         }
     }, [location.search, location.state, isAuthenticated])
 
