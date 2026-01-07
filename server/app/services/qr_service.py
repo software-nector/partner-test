@@ -93,15 +93,6 @@ class QRCodeService:
             if page > 0:
                 c.showPage()
             
-            # 1. Header Logic
-            c.setFont("Helvetica-Bold", 14)
-            c.drawCentredString(width / 2, height - 10*mm, f"{product_name} - Marketing Vectors")
-            
-            c.setFont("Helvetica", 8)
-            batch_str = f"Batch #{batch_info.get('number', 'N/A')}" if batch_info else ""
-            time_str = datetime.now().strftime("%d %b %Y | %H:%M")
-            c.drawCentredString(width / 2, height - 15*mm, f"{batch_str}  |  Generated: {time_str}  |  Page {page + 1} of {total_pages}")
-            
             # 2. Grid Placement
             start_idx = page * codes_per_page
             end_idx = min(start_idx + codes_per_page, len(qr_codes))
@@ -129,9 +120,7 @@ class QRCodeService:
                 c.setFont("Helvetica-Bold", 12)
                 c.drawCentredString(x + qr_size / 2, text_y, label)
                 
-                # Optional: Product Name (very small at the bottom of the cell)
-                c.setFont("Helvetica", 6)
-                c.drawCentredString(x + qr_size / 2, text_y - 4*mm, product_name[:40] + ("..." if len(product_name) > 40 else ""))
+                # End of cell
         
         c.save()
         buffer.seek(0)
