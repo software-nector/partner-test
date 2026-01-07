@@ -61,7 +61,8 @@ async def submit_reward(
     
     # Generate a completely random, secure filename
     import uuid
-    timestamp = int(datetime.utcnow().timestamp())
+    import time
+    timestamp = int(time.time())
     safe_filename = f"{uuid.uuid4().hex}_{timestamp}{file_extension}"
     file_path = f"{upload_dir}/{safe_filename}"
     
