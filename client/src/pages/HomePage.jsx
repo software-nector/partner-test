@@ -527,11 +527,11 @@ export default function HomePage() {
                                             <input
                                                 required
                                                 type="text"
-                                                readOnly={!!new URLSearchParams(window.location.search).get('code')}
+                                                readOnly={!!sessionStorage.getItem('scanned_code') || !!location.state?.autoOpenReward}
                                                 value={cashbackForm.couponCode}
                                                 onChange={(e) => setCashbackForm({ ...cashbackForm, couponCode: e.target.value.toUpperCase() })}
                                                 placeholder="Enter code from product"
-                                                className={`w-full bg-[#0f1729] border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-400 outline-none ${new URLSearchParams(window.location.search).get('code') ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                                className={`w-full bg-[#0f1729] border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-400 outline-none ${(sessionStorage.getItem('scanned_code') || location.state?.autoOpenReward) ? 'opacity-70 cursor-not-allowed' : ''}`}
                                             />
                                         </div>
                                         <div>
