@@ -131,11 +131,7 @@ async def submit_reward(
             print(f"❌ REJECTED: Only 5-star reviews are eligible. Detected: {detected_rating} stars")
             raise HTTPException(
                 status_code=400,
-                detail={
-                    "message": f"केवल 5-स्टार रिव्यू के लिए कैशबैक मिलेगा। आपका रिव्यू: {detected_rating} स्टार",
-                    "detected_rating": detected_rating,
-                    "suggestion": "कृपया अपना रिव्यू 5 स्टार में बदलें और फिर से अपलोड करें"
-                }
+                detail=f"केवल 5-स्टार रिव्यू के लिए कैशबैक मिलेगा। आपका रिव्यू: {detected_rating} स्टार। कृपया 5-स्टार रिव्यू का सही स्क्रीनशॉट अपलोड करें।"
             )
         
         print(f"✅ Step 1 Passed: 5-Star Review Detected")

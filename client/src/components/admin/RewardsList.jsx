@@ -243,10 +243,10 @@ export default function RewardsList() {
                                                 {reward.name ? reward.name[0] : 'U'}
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-white tracking-tight leading-tight">{reward.name}</h3>
+                                                <h3 className="text-lg font-bold text-white tracking-tight leading-tight">{reward.name || 'Anonymous User'}</h3>
                                                 <div className="flex items-center gap-4 text-[10px] font-bold text-slate-600 mt-1">
-                                                    <span className="flex items-center gap-1"><CreditCard size={10} /> {reward.phone}</span>
-                                                    <span className="flex items-center gap-1 uppercase tracking-widest"><Calendar size={10} /> {new Date(reward.purchase_date).toLocaleDateString()}</span>
+                                                    <span className="flex items-center gap-1"><CreditCard size={10} /> {reward.phone || 'No Phone'}</span>
+                                                    <span className="flex items-center gap-1 uppercase tracking-widest"><Calendar size={10} /> {reward.purchase_date ? new Date(reward.purchase_date).toLocaleDateString() : 'N/A'}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -268,7 +268,7 @@ export default function RewardsList() {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-white/[0.02] rounded-2xl border border-white/5">
                                         <div>
                                             <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Product Audit</div>
-                                            <div className="text-xs font-bold text-slate-200 line-clamp-1">{reward.product_name}</div>
+                                            <div className="text-xs font-bold text-slate-200 line-clamp-1">{reward.product_name || 'N/A'}</div>
                                         </div>
                                         <div>
                                             <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Platform</div>
