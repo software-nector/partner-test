@@ -11,9 +11,12 @@ class QRCode(Base):
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     batch_id = Column(Integer, ForeignKey("qr_batches.id"), nullable=True)
     
-    # Unique identifier for the QR code (used in URL)
-    # Refactored to allow Prefix-Serial or UUID
+    # Secret/Actual Coupon Code (Not shown in URL)
     code = Column(String(50), unique=True, index=True)
+    
+    # Public Link Token (Shown in URL, maps to the code)
+    link_token = Column(String(50), unique=True, index=True, default=lambda: uuid.uuid4().hex[:12])
+    
     serial_number = Column(Integer, nullable=True) # Serial within the product
     
     # Tracking

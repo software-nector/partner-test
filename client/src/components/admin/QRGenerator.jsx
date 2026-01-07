@@ -116,10 +116,12 @@ export default function QRGenerator() {
         }
     }
 
-    const copyToClipboard = (code) => {
-        const url = `${window.location.origin}/p/${code}`
+    const copyToClipboard = (qr) => {
+        const pName = products.find(p => p.id === parseInt(selectedProduct))?.name || 'product'
+        const slug = pName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        const url = `${window.location.origin}/p/${slug}/${qr.link_token}`
         navigator.clipboard.writeText(url)
-        toast.success('Pointer Link Copied')
+        toast.success('Premium Link Copied')
     }
 
     if (loading) {
@@ -318,7 +320,7 @@ export default function QRGenerator() {
                                         </div>
                                         <div className="flex gap-3">
                                             <button
-                                                onClick={() => copyToClipboard(qr.code)}
+                                                onClick={() => copyToClipboard(qr)}
                                                 className="px-6 py-3.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/5 flex items-center justify-center gap-2 group/btn"
                                             >
                                                 <Copy size={14} className="group-hover/btn:scale-110 transition-transform" /> Copy Pointer

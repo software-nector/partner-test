@@ -20,12 +20,12 @@ class QRCodeService:
     def __init__(self):
         self.base_url = settings.FRONTEND_URL.rstrip('/')
     
-    def generate_qr_image(self, code: str, size: int = 300) -> BytesIO:
+    def generate_qr_image(self, url: str, size: int = 300) -> BytesIO:
         """
-        Generate QR code image
+        Generate QR code image from a raw URL
         
         Args:
-            code: Unique QR code string
+            url: The exact URL to embed in the QR
             size: Image size in pixels
             
         Returns:
@@ -39,8 +39,7 @@ class QRCodeService:
             border=4,
         )
         
-        # Add data (Privacy-focused path /p/)
-        url = f"{self.base_url}/p/{code}"
+        # Add data
         qr.add_data(url)
         qr.make(fit=True)
         
@@ -112,7 +111,7 @@ class QRCodeService:
                 c.drawCentredString(x + qr_size / 2, y + qr_size + 1*mm, "SCAN")
                 
                 # Draw QR image
-                qr_img = self.generate_qr_image(code)
+                qr_img = self.generate_qr_image(url)
                 c.drawImage(ImageReader(qr_img), x, y, width=qr_size, height=qr_size, preserveAspectRatio=True)
                 
                 # Draw SKU-Serial below QR

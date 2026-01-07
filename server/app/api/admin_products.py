@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 import uuid
+import re
 
 from app.database import get_db
 from app.models.company import Company
@@ -242,7 +243,16 @@ async def generate_pdf_batch(product_id: int, quantity: int, db: Session = Depen
     db.commit()
     
     # 3. Prepare data for PDF
-    qr_data = [(qr.code, f"{base_url}/p/{qr.code}", f"{sku}-{qr.serial_number:02d}") for qr in generated_qr_objects]
+    # slugify product name for premium URL look
+    product_slug = re.sub(r'[^a-z0-9]+', '-', product.name.lower()).strip('-')
+    
+    qr_data = []
+    for qr in generated_qr_objects:
+        # Use link_token for the URL instead of code
+        # URL format: /p/product-slug/link-token
+        masked_url = f"{base_url}/p/{product_slug}/{qr.link_token}"
+        label = f"{sku}-{qr.serial_number:02d}"
+        qr_data.append((qr.link_token, masked_url, label))
     
     # 4. Generate PDF in memory (RAM)
     batch_info = {
@@ -322,7 +332,14 @@ async def download_qr_pdf(product_id: int, db: Session = Depends(get_db), is_adm
     
     # Prepare data for PDF using config URL
     base_url = settings.FRONTEND_URL.rstrip('/')
-    qr_data = [(qr.code, f"{base_url}/p/{qr.code}") for qr in qr_codes]
+    product_slug = re.sub(r'[^a-z0-9]+', '-', product.name.lower()).strip('-')
+    sku = (product.sku_prefix or "QR").upper()
+    
+    qr_data = []
+    for qr in qr_codes:
+        masked_url = f"{base_url}/p/{product_slug}/{qr.link_token}"
+        label = f"{sku}-{qr.serial_number:02d}"
+        qr_data.append((qr.link_token, masked_url, label))
     
     # Generate PDF
     pdf_buffer = qr_service.generate_bulk_pdf(qr_data, product.name)

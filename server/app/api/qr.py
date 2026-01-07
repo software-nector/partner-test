@@ -4,17 +4,17 @@ from datetime import datetime
 from app.database import get_db
 from app.models.qr_code import QRCode
 from app.models.product import Product
-from app.schemas.product import ProductResponse
+from app.schemas.product import ProductResponse, QRResolutionResponse
 
 router = APIRouter()
 
-@router.get("/{code}", response_model=ProductResponse)
-async def resolve_qr_code(code: str, db: Session = Depends(get_db)):
+@router.get("/{token}", response_model=QRResolutionResponse)
+async def resolve_qr_code(token: str, db: Session = Depends(get_db)):
     """
-    Resolve a unique QR code.
-    Increments scan count and returns the associated product.
+    Resolve a unique QR code link token.
+    Increments scan count and returns the associated product + the HIDDEN code.
     """
-    qr = db.query(QRCode).filter(QRCode.code == code).first()
+    qr = db.query(QRCode).filter(QRCode.link_token == token).first()
     
     if not qr:
         raise HTTPException(status_code=404, detail="Invalid QR code")
@@ -32,4 +32,7 @@ async def resolve_qr_code(code: str, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Associated product not found")
         
-    return product
+    return {
+        "product": product,
+        "coupon_code": qr.code
+    }

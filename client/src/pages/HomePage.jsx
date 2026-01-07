@@ -69,12 +69,49 @@ export default function HomePage() {
     const [detectedProduct, setDetectedProduct] = useState(null)
 
     useEffect(() => {
-        const fetchDetectedProduct = async () => {
-            if (!cashbackForm.couponCode) return
+        const resolvePendingToken = async () => {
+            const pendingToken = sessionStorage.getItem('pending_qr_resolution');
+            if (!pendingToken) return;
+
             try {
-                // Fetch product info from backend using the code
+                // Clear immediately so it doesn't re-run
+                sessionStorage.removeItem('pending_qr_resolution');
+
+                // Fetch the real product and coupon code
+                const response = await api.get(`/qr/${pendingToken}`);
+                const { product, coupon_code } = response.data;
+
+                // Update forms with the REAL code
+                setLoginForm(prev => ({ ...prev, coupon: coupon_code }));
+                setCashbackForm(prev => ({ ...prev, couponCode: coupon_code }));
+                setDetectedProduct(product);
+
+                // Open the right section
+                if (isAuthenticated) {
+                    setActiveSection('claims');
+                } else {
+                    setShowLoginModal(true);
+                }
+
+                toast.success(`Product Detected: ${product.name}`);
+            } catch (error) {
+                console.error('Failed to resolve pending QR:', error);
+                toast.error('Invalid or expired QR link');
+            }
+        };
+
+        resolvePendingToken();
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        const fetchDetectedProduct = async () => {
+            if (!cashbackForm.couponCode || detectedProduct) return
+            try {
+                // Fetch product info from backend using the code (for manual entry)
                 const response = await api.get(`/qr/${cashbackForm.couponCode}`)
-                setDetectedProduct(response.data)
+                // Handle both old response (direct product) and new one (nested)
+                const data = response.data.product || response.data;
+                setDetectedProduct(data)
             } catch (error) {
                 console.error('Failed to resolve QR product:', error)
                 setDetectedProduct(null)

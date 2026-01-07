@@ -7,10 +7,17 @@ import AdminDashboard from './pages/AdminDashboard'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
 const NavigateToHome = () => {
-    const { qrCode } = useParams()
-    if (qrCode) {
-        sessionStorage.setItem('scanned_code', qrCode.toUpperCase());
+    const { qrCode, token } = useParams()
+
+    // Support both old style (/p/CODE) and new style (/p/slug/token)
+    const activeToken = token || qrCode
+
+    if (activeToken) {
+        // We store it as a temporary resolution token
+        // HomePage will see this and resolve it to a real code
+        sessionStorage.setItem('pending_qr_resolution', activeToken);
     }
+
     return <Navigate to="/" replace state={{ autoOpenReward: true }} />
 }
 
@@ -21,6 +28,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/p/:qrCode" element={<NavigateToHome />} />
+                    <Route path="/p/:slug/:token" element={<NavigateToHome />} />
 
                     {/* Admin routes remain separate for security/scope */}
                     <Route path="/admin/login" element={<AdminLoginPage />} />

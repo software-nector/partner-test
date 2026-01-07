@@ -33,6 +33,7 @@ class ProductResponse(ProductBase):
 
 class QRCodeResponse(BaseModel):
     code: str
+    link_token: str
     product_id: int
     batch_id: Optional[int] = None
     serial_number: Optional[int] = None
@@ -45,3 +46,7 @@ class QRCodeResponse(BaseModel):
 
 class ProductWithQRResponse(ProductResponse):
     qr_codes: List[QRCodeResponse] = []
+
+class QRResolutionResponse(BaseModel):
+    product: ProductResponse
+    coupon_code: str
